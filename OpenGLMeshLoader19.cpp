@@ -350,13 +350,9 @@ void moveEnemy() {
 		enemy += (player - enemy).unit() * Vector3f(1, 0, 1) * enemySpeed;
 	}
 	else {
-		cout << Xp << " " << Yp << " " << Xe << " " << Ye << endl;
-		cout << xp << " " << yp << " " << xe << " " << ye << endl;
 
 		if ((enemyNextTarget.y < 0) && ((Xp != Xe) || (Yp != Ye))) {
-			cout << "hello" << endl;
 			if (((abs(Xp - Xe) < abs(Yp - Ye)) && (Xp != Xe)) || (Yp == Ye)) {
-				cout << "XXXX" << endl;
 				if (player.x > enemy.x) {
 					xp = 14;
 					yp = 7;
@@ -367,7 +363,6 @@ void moveEnemy() {
 				}
 			}
 			else {
-				cout << "YYYY" << endl;
 
 				if (player.z > enemy.z) {
 					xp = 4;
@@ -378,9 +373,7 @@ void moveEnemy() {
 					yp = 0;
 				}
 			}
-			cout << xe << " " << xp << " " << ye << " " << yp << endl;
 			if (((xe % 15 + 15) % 15 == (xp % 15 + 15) % 15) && ((ye % 15 + 15) % 15 == (yp % 15 + 15) % 15)) {
-				cout << "goodbye" << endl;
 				if (xp == 0) {
 					enemyNextTarget = Vector3f((xe - 1 - 1) * 7, 1, (ye - 1) * 7);
 				}
@@ -414,11 +407,6 @@ void moveEnemy() {
 					bestInd = i;
 				}
 			}
-			//cout << bestInd<<endl;
-			//cout << dx[bestInd]<<" " << dy[bestInd]<<endl;
-			cout << (xe - 1 + dx[bestInd] + 15) % 15 << " " << (ye - 1 + dy[bestInd] + 15) % 15 << endl;
-			cout << dx[bestInd] << " " << dy[bestInd] << endl;
-			cout << bestV << endl;
 
 			enemyNextTarget = Vector3f((xe - 1 + dx[bestInd]) * 7, 1, (ye - 1 + dy[bestInd]) * 7);
 		}
@@ -428,7 +416,7 @@ void moveEnemy() {
 		}
 	}
 
-	if (abs(player.x - enemy.x) + abs(player.z - enemy.z) > 70)enemySpeed = 1;
+	if (abs(player.x - enemy.x) + abs(player.z - enemy.z) > 50)enemySpeed = 1;
 	if (abs(player.x - enemy.x) + abs(player.z - enemy.z) < 28)enemySpeed = 0.25;
 
 }
@@ -617,9 +605,13 @@ void RenderGround()
 	glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
 }
 void RenderEnemy() {
+	double dot =   player.z - enemy.z;
+	double det = player.x - enemy.x;
+	double angle = rad2deg(atan2(det, dot));
 	glPushMatrix();
 	glPushMatrix();
 	glTranslated(enemy.x, enemy.y, enemy.z - 0.02);
+	glRotatef(angle, 0, 1, 0);
 	glScalef(0.15, 0.15, 0.15);
 	model_player.Draw();
 	//obj_render(spider);
