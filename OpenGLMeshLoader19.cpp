@@ -76,6 +76,9 @@ public:
 	Vector3f operator/(float n) {
 		return Vector3f(x / n, y / n, z / n);
 	}
+	Vector3f operator-(float n) {
+		return Vector3f(x - n, y - n, z - n);
+	}
 
 	Vector3f unit() {
 		return *this / sqrt(x * x + y * y + z * z);
@@ -114,6 +117,7 @@ GLdouble zFar = 250;
 GLdouble angleFront = 0;
 GLdouble angleUp = 0;
 GLdouble angleCoin = 0;
+GLdouble angleSun = 0.04;
 
 
 
@@ -125,6 +129,7 @@ Vector3f front = Vector3f(1, 1, 0);
 
 Vector3f player = Vector3f(0, 0, 0);
 Vector3f playerV = Vector3f(0, 0, 0);
+Vector3f sun = Vector3f(130, 160, 40);
 Vector3f enemy = Vector3f(0, 0, -35);
 Vector3f enemyNextTarget = Vector3f(0, -1, 0);
 double enemySpeed = 0.25;
@@ -132,6 +137,7 @@ double enemySpeed = 0.25;
 int cameraZoom = 0;
 Model_3DS model_player;
 GLuint tex_sky;
+GLTexture tex_sun;
 GLTexture tex_ground;
 Model_3DS model_building1;
 Model_3DS model_coin;
@@ -187,7 +193,7 @@ void computeFloyd() {
 	}
 }
 void InitLightSource()
-{
+{/*
 	// Enable Lighting for this OpenGL Program
 	glEnable(GL_LIGHTING);
 	// Enable Light Source number 0
@@ -204,11 +210,19 @@ void InitLightSource()
 
 	// Define Light source 0 Specular light
 	GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	GLfloat light_position[] = { sun.x, sun.y,sun.z, 1.0f };
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
-
-	// Finally, define light source 0 position in World Space
-	GLfloat light_position[] = { 0.0f, 10.0f, 0.0f, 1.0f };
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+	GLfloat lightIntensity[] = { 1.0, 1.0 ,1.0, 1.0f };
+	glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
+	/// <summary>
+	///gLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 30.0);
+	//glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 90.0);
+	//glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, l0Direction);
+	/// </summary>
+
+
+	// Finally, define light source 0 position in World Space*/
 }
 void InitMaterial()
 {
@@ -262,6 +276,7 @@ bool isCoin(int x, int z) {
 
 void isFreeThenMove(Vector3f acc) {
 	if (isBuilding((int)round(player.x + acc.x), (int)round(player.z + acc.z))) {
+		sndPlaySound(TEXT("sounds/buildCollision.wav"), SND_ASYNC | SND_FILENAME);
 		if (isBuilding((int)round(player.x + acc.x), (int)round(player.z)))
 			acc = acc * Vector3f(0, 1, 1);
 		if (isBuilding((int)round(player.x + acc.x), (int)round(player.z + acc.z)))
@@ -279,8 +294,9 @@ void isFreeThenMove(Vector3f acc) {
 	else {
 	}
 
-
 	player += acc;
+
+	//sun += Vector3f(acc.x-10, 0, acc.z - 10);
 	if (isObsticle((int)round(player.x), (int)round(player.z)) && player.y < 1) {
 		player.y = 1;
 		playerV.y = 0;
@@ -292,10 +308,12 @@ void isFreeThenMove(Vector3f acc) {
 		playerV.y = 0;
 		jump = 0;
 
+
 	}
 
 	if (isCoin((int)round(player.x), (int)round(player.z)) && player.y <= 1) {
 		if (takenCoins.size() > 20)takenCoins.pop_front();
+		sndPlaySound(TEXT("sounds/collection.wav"), SND_ASYNC | SND_FILENAME);
 		takenCoins.push_back(pair<int, int>{(int)round(player.x), (int)round(player.z)});
 	}
 }
@@ -342,10 +360,10 @@ void moveEnemy() {
 	int yp = (int)round(player.z / 7.0) + 1;
 	int xe = (int)round(enemy.x / 7.0) + 1;
 	int ye = (int)round(enemy.z / 7.0) + 1;
-	int Xp = xp / 15 - (((xp%15!=0)&&(xp < 0 ))? 1 : 0);
+	int Xp = xp / 15 - (((xp % 15 != 0) && (xp < 0)) ? 1 : 0);
 	int Yp = yp / 15 - (((yp % 15 != 0) && (yp < 0)) ? 1 : 0);
 	int Xe = xe / 15 - (((xe % 15 != 0) && (xe < 0)) ? 1 : 0);
-	int Ye = ye / 15 - (((ye % 15 != 0) && (ye < 0 ))? 1 : 0);
+	int Ye = ye / 15 - (((ye % 15 != 0) && (ye < 0)) ? 1 : 0);
 	if (xp == xe && yp == ye) {
 		enemy += (player - enemy).unit() * Vector3f(1, 0, 1) * enemySpeed;
 	}
@@ -398,7 +416,7 @@ void moveEnemy() {
 			int bestV = 1000000000;
 			for (int i = 0;i < 4;i++) {
 				if (((xe % 15 + 15) % 15 + dx[i] < 0) || ((xe % 15 + 15) % 15 + dx[i] > 14)
-					|| ((ye % 15 + 15) % 15 + dy[i] < 0) || ((ye % 15 + 15) % 15 + dy[i] >14)
+					|| ((ye % 15 + 15) % 15 + dy[i] < 0) || ((ye % 15 + 15) % 15 + dy[i] > 14)
 					|| map[(xe % 15 + 15) % 15 + dx[i]][(ye % 15 + 15) % 15 + dy[i]])continue;
 
 
@@ -451,7 +469,21 @@ void drawCoin(int x, int z) {
 	model_coin.Draw();
 	glPopMatrix();
 }
+void drawSun() {
+	glPushMatrix();
+	glTranslatef(sun.x + player.x, sun.y, sun.z + player.z);
+	glColor3f(1, 1, 0); //dim 
+	GLUquadricObj* qfoot;
+	qfoot = gluNewQuadric();
+	glBindTexture(GL_TEXTURE_2D, tex_sun.texture[0]);
+	gluQuadricNormals(qfoot, GL_SMOOTH);
+	gluQuadricTexture(qfoot, GL_TRUE);
+	gluSphere(qfoot, 20, 20, 20);
+	gluDeleteQuadric(qfoot);
+	glDisable(GL_TEXTURE_2D);
 
+	glPopMatrix();
+}
 void RenderCoins()
 
 {
@@ -605,7 +637,7 @@ void RenderGround()
 	glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
 }
 void RenderEnemy() {
-	double dot =   player.z - enemy.z;
+	double dot = player.z - enemy.z;
 	double det = player.x - enemy.x;
 	double angle = rad2deg(atan2(det, dot));
 	glPushMatrix();
@@ -684,6 +716,7 @@ void myKeyboard(unsigned char button, int x, int y)
 	{
 	case ' ': {
 		if (jump < 100) {
+			sndPlaySound(TEXT("sounds/wallCollision.wav"), SND_ASYNC | SND_FILENAME);
 			playerV += Vector3f(0, 0.2, 0);
 			jump++;
 		}
@@ -785,18 +818,14 @@ void print(int x, int y, int z, string string)
 }
 void display(void)
 {
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	ShowCursor(false);
-	GLfloat lightIntensity[] = { 0.7, 0.7, 0.7, 1.0f };
-	GLfloat lightPosition[] = { 0.0f, 100.0f, 0.0f, 0.0f };
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	ShowCursor(false);
+	InitLightSource();
+	InitMaterial();
 
 	glColor3f(0, 0, 0);
 
-
+	drawSun();
 	RenderGround();// Draw Ground
 	RenderObsticles();
 	RenderCoins();
@@ -822,11 +851,15 @@ void display(void)
 
 	glutSwapBuffers();
 }
+void rotateSun() {
 
+	sun = Vector3f(cos(deg2rad(angleSun)) * sun.x - sin(deg2rad(angleSun)) * sun.y, sin(deg2rad(angleSun)) * sun.x + cos(deg2rad(angleSun)) * sun.y, sun.z);
+}
 
 void tick(int value) {
 	move();
 	moveEnemy();
+	rotateSun();
 	if (cameraUp && (angleUp - 4 > -90)) {
 		angleUp -= 4;
 	}
@@ -913,7 +946,7 @@ void LoadAssets()
 	model_building1.Load("Models/building1/Tower Constantino Eleninskaya Kremlin N120615.3DS");
 	model_coin.Load("Models/gold/gold.3ds");
 	tex_ground.Load("Textures/street.bmp");
-
+	tex_sun.Load("Textures/sun.bmp");
 
 	loadBMP(&tex_sky, "Textures/blu-sky-3.bmp", true);
 }
@@ -923,7 +956,6 @@ void main(int argc, char** argv)
 {
 	computeFloyd();
 	glutInit(&argc, argv);
-
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 
 	glutInitWindowSize(WIDTH, HEIGHT);
