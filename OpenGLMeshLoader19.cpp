@@ -106,6 +106,8 @@ int jump = 0;
 int view = 1;
 double mouseX = 0;
 double mouseY = 0;
+double sunDim = 0;
+double skyDim = 0;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
 
@@ -193,25 +195,19 @@ void computeFloyd() {
 	}
 }
 void InitLightSource()
-{/*
-	// Enable Lighting for this OpenGL Program
+{
 	glEnable(GL_LIGHTING);
-	// Enable Light Source number 0
-	// OpengL has 8 light sources
 	glEnable(GL_LIGHT0);
 
-	// Define Light source 0 ambient light
 	GLfloat ambient[] = { 0.1f, 0.1f, 0.1, 1.0f };
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
 
-	// Define Light source 0 diffuse light
-	GLfloat diffuse[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+	GLfloat diffuse[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
 
-	// Define Light source 0 Specular light
 	GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	GLfloat light_position[] = { sun.x, sun.y,sun.z, 1.0f };
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
+	GLfloat light_position[] = { 0, 1,1, 1.0f };
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 	GLfloat lightIntensity[] = { 1.0, 1.0 ,1.0, 1.0f };
 	glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
@@ -472,7 +468,7 @@ void drawCoin(int x, int z) {
 void drawSun() {
 	glPushMatrix();
 	glTranslatef(sun.x + player.x, sun.y, sun.z + player.z);
-	glColor3f(1, 1, 0); //dim 
+	glColor3f(1, 1+sunDim, 0); //dim 
 	GLUquadricObj* qfoot;
 	qfoot = gluNewQuadric();
 	glBindTexture(GL_TEXTURE_2D, tex_sun.texture[0]);
@@ -837,6 +833,7 @@ void display(void)
 	GLUquadricObj* qobj;
 	qobj = gluNewQuadric();
 	glTranslated(player.x, 0, player.z);
+	glColor3f(0.7+skyDim, 0.7+skyDim, 0.7+skyDim);
 	glRotated(90, 1, 0, 1);
 	glBindTexture(GL_TEXTURE_2D, tex_sky);
 	gluQuadricTexture(qobj, true);
@@ -859,6 +856,13 @@ void rotateSun() {
 void tick(int value) {
 	move();
 	moveEnemy();
+	if (sunDim >= -0.7) {
+
+	sunDim -= 0.001;
+	}
+	if (skyDim >= -0.5) {
+		skyDim -= 0.001;
+	}
 	rotateSun();
 	if (cameraUp && (angleUp - 4 > -90)) {
 		angleUp -= 4;
