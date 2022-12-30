@@ -306,7 +306,8 @@ bool isObsticle(int x, int z) {
 	}
 }
 bool isCoin(int x, int z) {
-	return (x % 7 == 0) && (z % 7 == 0) && (find(takenCoins.begin(), takenCoins.end(), (pair<int, int>{x, z})) == takenCoins.end()) && !isBuilding(x, z);
+	if (x == 0 && z == 0)return false;
+	return(x % 7 == 0) && (z % 7 == 0) && (find(takenCoins.begin(), takenCoins.end(), (pair<int, int>{x, z})) == takenCoins.end()) && !isBuilding(x, z);
 }
 
 
