@@ -108,7 +108,7 @@ double mouseY = 0;
 double sunDim = 0;
 double skyDim = 0;
 double light1 = 0;
-bool isNight = false;
+bool isNight = true;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
 
@@ -357,6 +357,13 @@ void isFreeThenMove(Vector3f acc) {
 		takenCoins.push_back(pair<int, int>{(int)round(player.x), (int)round(player.z)});
 	}
 }
+/*sndPlaySound(TEXT("sounds/monster.wav"), SND_ASYNC | SND_FILENAME);
+
+double getDistance() {
+	return sqrt(abs((player.x - enemy.x) * (player.x - enemy.x) +
+		(player.y - enemy.y) * (player.y - enemy.y) +
+		(player.z - enemy.z) * (player.z - enemy.z)));
+}*/
 void move() {
 	Vector3f acc = Vector3f(0, 0, 0);
 	if (movingFront) {
@@ -1075,6 +1082,7 @@ void main(int argc, char** argv)
 	glutSpecialUpFunc(SpecialUp);
 
 	glutReshapeFunc(myReshape);
+	sndPlaySound(TEXT("sounds/monster.wav"), SND_ASYNC | SND_FILENAME);
 
 	myInit();
 
