@@ -142,6 +142,8 @@ Model_3DS model_player;
 Model_3DS model_enemy;
 Model_3DS model_can;
 Model_3DS model_car;
+Model_3DS model_lightPost;
+
 
 Model_3DS model_drink;
 GLuint tex_sky;
@@ -571,7 +573,13 @@ void drawCircle(int x, int y, float r, bool solid) {
 
 }
 
+void drawLightPost(int x, int z) {
+	glPushMatrix();
+	glScalef(0.01, 0.01, 0.01);
+    model_lightPost.Draw();
+	glPopMatrix();
 
+}
 void RenderCoins()
 
 {
@@ -637,6 +645,7 @@ void RenderMap()
 
 	glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
 }
+
 void RenderObsticles()
 
 {
@@ -650,17 +659,14 @@ void RenderObsticles()
 
 
 	for (int x = -30 + centerx;x - centerx <= 30;x++) {
-
-
 		for (int z = -30 + centerz;z - centerz <= 30;z++) {
 			if (isObsticle(x, z)) {
 				glPushMatrix();
 				glTranslatef(x, 0.501, z);
 				if (isNight) {
+					
 					glColor3f(0, 0, 0);
-					//model_car.Draw();
 					glutSolidCube(1);
-
 				}
 				else {
 					glColor3f(0, 0, 0);
@@ -1043,6 +1049,7 @@ void LoadAssets()
 	model_enemy.Load("models/enemy/2.3ds");
 	model_can.Load("models/cola/Pot Cola N260411.3ds");
 	model_drink.Load("models/drink/drink.3ds");
+	model_lightPost.Load("models/lightPost/Lamppost N140708.3ds");
 	model_car.Load("models/car/Car 1960s car body and wheels N111122.3ds");
     
 
