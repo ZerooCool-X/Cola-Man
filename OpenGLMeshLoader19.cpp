@@ -311,6 +311,10 @@ bool isCoin(int x, int z) {
 	if (x == 0 && z == 0)return false;
 	return(x % 7 == 0) && (z % 7 == 0) && (find(takenCoins.begin(), takenCoins.end(), (pair<int, int>{x, z})) == takenCoins.end()) && !isBuilding(x, z);
 }
+bool isLightPost(int x, int z) {
+	if (x == 0 && z == 0||isBuilding(x,z))return false;
+	return (x % 7== 0) && (z % 7 == 0);
+}
 
 
 void isFreeThenMove(Vector3f acc) {
@@ -493,10 +497,6 @@ void rotateSun() {
 
 
 
-
-
-
-
 void drawCoin(int x, int z) {
 	glPushMatrix();
 	if (isNight) {
@@ -575,7 +575,7 @@ void drawCircle(int x, int y, float r, bool solid) {
 
 void drawLightPost(int x, int z) {
 	glPushMatrix();
-	glScalef(0.01, 0.01, 0.01);
+	glScalef(0.02, 0.02, 0.02);
     model_lightPost.Draw();
 	glPopMatrix();
 
@@ -664,7 +664,6 @@ void RenderObsticles()
 				glPushMatrix();
 				glTranslatef(x, 0.501, z);
 				if (isNight) {
-					
 					glColor3f(0, 0, 0);
 					glutSolidCube(1);
 				}
@@ -675,6 +674,31 @@ void RenderObsticles()
 			
 				//drawCoin();
 				glPopMatrix();
+			}
+		}
+	}
+
+
+
+	glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
+}
+void RenderLightPosts()
+
+{
+
+
+	int centerx = ((int)player.x / 7) * 7;
+	int centerz = ((int)player.z / 7) * 7;
+
+
+	for (int x = -28 + centerx;x - centerx <= 28;x += 7) {
+		for (int z = -28 + centerz;z - centerz <= 28;z += 7) {
+			if (isLightPost(x, z)) {
+				glPushMatrix();
+				glTranslatef(x, -0.5, z);
+				drawLightPost(x, z);
+				glPopMatrix();
+
 			}
 		}
 	}
@@ -920,7 +944,7 @@ void display(void)
 	RenderObsticles();
 	RenderCoins();
 	RenderMap();
-
+	RenderLightPosts();
 	RenderEnemy();
 	if (view != 1)
 		RenderPlayer();
@@ -950,7 +974,7 @@ void display(void)
 }
 void tick(int value) {
 	move();
-	moveEnemy();
+	//moveEnemy();
 	if (!isNight) {
 		if (sunDim >= -0.6) {
 
