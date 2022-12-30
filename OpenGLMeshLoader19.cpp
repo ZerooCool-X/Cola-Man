@@ -108,7 +108,7 @@ double mouseY = 0;
 double sunDim = 0;
 double skyDim = 0;
 double light1 = 0;
-bool isNight = true;
+bool isNight = false;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
 
@@ -906,10 +906,7 @@ void display(void)
 	RenderObsticles();
 	RenderCoins();
 	RenderMap();
-	glPushMatrix();
-	glTranslatef(5, 0, 0);
-	model_can.Draw();
-	glPopMatrix();
+
 	RenderEnemy();
 	if (view != 1)
 		RenderPlayer();
@@ -939,9 +936,9 @@ void display(void)
 }
 void tick(int value) {
 	move();
-	//moveEnemy();
+	moveEnemy();
 	if (!isNight) {
-		if (sunDim >= -0.5) {
+		if (sunDim >= -0.6) {
 
 			sunDim -= 0.0005;
 		}
