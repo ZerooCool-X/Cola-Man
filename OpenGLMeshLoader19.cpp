@@ -107,6 +107,8 @@ double mouseX = 0;
 double mouseY = 0;
 double sunDim = 0;
 double skyDim = 0;
+double light1 = 0;
+bool isNight = true;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
 
@@ -138,11 +140,16 @@ double enemySpeed = 0.25;
 int cameraZoom = 0;
 Model_3DS model_player;
 Model_3DS model_enemy;
+Model_3DS model_can;
+Model_3DS model_car;
 
+Model_3DS model_drink;
 GLuint tex_sky;
+GLuint tex_sky_night;
 GLTexture tex_sun;
+GLTexture tex_moon;
 GLuint tex_eye;
-
+GLTexture tex_road;
 GLTexture tex_ground;
 Model_3DS model_building1;
 Model_3DS model_coin;
@@ -214,42 +221,33 @@ void InitLightSource()
 {
 	// Enable Lighting for this OpenGL Program
 	glEnable(GL_LIGHTING);
-	GLfloat light_position[] = {sun.x, sun.y, sun.z,0 };
-	// Enable Light Source number 0
-	// OpengL has 8 light sources
+	glEnable(GL_LIGHT1);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT2);
 
-	// Define Light source 0 ambient light
+	if (isNight) {
+		//camera lights
+		GLfloat lightIntensity[] = {1.0f,1.0f,1.0f, 1.0f };
+		GLfloat light2_Position[] = { 0.0f,0.0f, 0.0f, 0.0f };
+		glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
+		glLightfv(GL_LIGHT0, GL_POSITION, light2_Position);
+	}
+	else {
+		//camera lights
+		GLfloat light1Intensity[] = { 1.0 + light1, 1.0 + light1 ,1.0 + light1, 1.0f };
+		GLfloat light1_Position[] = { 0.0f,0.0f, 0.0f, 0.0f };
+		glLightfv(GL_LIGHT0, GL_AMBIENT, light1Intensity);
+		glLightfv(GL_LIGHT0, GL_POSITION, light1_Position);
 
-	/*
-	GLfloat ambient[] = { 0.1f, 0.1f, 0.1, 0.0f };
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-	*/
+		//sun lights
+		GLfloat light0Intensity[] = { 1.0 , 1.0+sunDim ,0.93+sunDim, 1.0f };
+		GLfloat light0_position[] = { sun.x, sun.y, sun.z,0 };
+		glLightfv(GL_LIGHT0, GL_AMBIENT, light0Intensity);
+		glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+	}
+	
 
-	// Define Light source 0 diffuse light
-
-	/*
-	GLfloat diffuse[] = { 0.5f, 0.5f, 0.5f, 0.0f };
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-	// Define Light source 0 Specular light
-
-	GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
-	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-	GLfloat lightIntensity[] = { 1.0, 1.0 ,1.0, 0.0f };
-	glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
-	*/
-
-
-
-	/// <summary>
-	///gLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 30.0);
-	//glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 90.0);
-	//glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, l0Direction);
-	/// </summary>
-
-	// Finally, define light source 0 position in World Space
-	glLightfv(GL_LIGHT0,GL_POSITION, light_position);
+	
 	
 }
 void InitMaterial()
@@ -314,7 +312,6 @@ bool isCoin(int x, int z) {
 
 void isFreeThenMove(Vector3f acc) {
 	if (isBuilding((int)round(player.x + acc.x), (int)round(player.z + acc.z))) {
-		sndPlaySound(TEXT("sounds/buildCollision.wav"), SND_ASYNC | SND_FILENAME);
 		if (isBuilding((int)round(player.x + acc.x), (int)round(player.z)))
 			acc = acc * Vector3f(0, 1, 1);
 		if (isBuilding((int)round(player.x + acc.x), (int)round(player.z + acc.z)))
@@ -349,7 +346,14 @@ void isFreeThenMove(Vector3f acc) {
 
 	if (isCoin((int)round(player.x), (int)round(player.z)) && player.y <= 1) {
 		if (takenCoins.size() > 20)takenCoins.pop_front();
-		sndPlaySound(TEXT("sounds/collection.wav"), SND_ASYNC | SND_FILENAME);
+		if (isNight) {
+			sndPlaySound(TEXT("sounds/drink.wav"), SND_ASYNC | SND_FILENAME);
+
+		}
+		else {
+		      sndPlaySound(TEXT("sounds/collection.wav"), SND_ASYNC | SND_FILENAME);
+
+		}
 		takenCoins.push_back(pair<int, int>{(int)round(player.x), (int)round(player.z)});
 	}
 }
@@ -485,21 +489,45 @@ void rotateSun() {
 
 void drawCoin(int x, int z) {
 	glPushMatrix();
-	glTranslatef(0, -0.4, 0);
-	glRotatef(angleCoin + (x + 1) * (z + 1) * 7, 0, 1, 0);
-	glRotatef(90, 1, 0, 0);
-	glScalef(0.6, 0.6, 0.6);
-	model_coin.Draw();
+	if (isNight) {
+		glTranslatef(0, -0.5, 0);
+		glRotatef(angleCoin + (x + 1) * (z + 1) * 7, 0, 1, 0);
+		glRotatef(90, 1, 0, 0);
+		glScalef(0.15, 0.15, 0.15);
+		model_drink.Draw();
+
+	}
+	else {
+	   glTranslatef(0, -0.4, 0);
+		glRotatef(angleCoin + (x + 1) * (z + 1) * 7, 0, 1, 0);
+		glRotatef(90, 1, 0, 0);
+		glScalef(0.6, 0.6, 0.6);
+		model_coin.Draw();
+	}
+
 	glPopMatrix();
 }
 void drawSun() {
 	glDisable(GL_LIGHTING);
 	glPushMatrix();
 	glTranslatef(sun.x + player.x, sun.y, sun.z + player.z);
+	if (isNight) {
+		glColor3f(1, 1, 1);
+	}
+	else {
+
 	glColor3f(1, 1+sunDim, 0); //dim 
+	}
 	GLUquadricObj* qfoot;
 	qfoot = gluNewQuadric();
+	if (isNight) {
+		glBindTexture(GL_TEXTURE_2D, tex_moon.texture[0]);
+
+	}
+	else {
 	glBindTexture(GL_TEXTURE_2D, tex_sun.texture[0]);
+
+	}
 	gluQuadricNormals(qfoot, GL_SMOOTH);
 	gluQuadricTexture(qfoot, GL_TRUE);
 	gluSphere(qfoot, 20, 20, 20);
@@ -574,9 +602,7 @@ void RenderMap()
 
 	glColor3f(1, 1, 1);	// Dim the ground texture a bit
 
-	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
 
-	glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
 	int centerx = round(player.x / 7.0);
 	int centerz = round(player.z / 7.0);
 
@@ -611,9 +637,6 @@ void RenderObsticles()
 
 	glColor3f(1, 1, 1);	// Dim the ground texture a bit
 
-	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
-
-	glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
 	int centerx = ((int)player.x / 4) * 4;
 	int centerz = ((int)player.z / 4) * 4;
 
@@ -625,8 +648,17 @@ void RenderObsticles()
 			if (isObsticle(x, z)) {
 				glPushMatrix();
 				glTranslatef(x, 0.501, z);
-				glColor3f(0, 0, 0);
-				glutSolidCube(1);
+				if (isNight) {
+					glColor3f(0, 0, 0);
+					//model_car.Draw();
+					glutSolidCube(1);
+
+				}
+				else {
+					glColor3f(0, 0, 0);
+					glutSolidCube(1);
+				}
+			
 				//drawCoin();
 				glPopMatrix();
 			}
@@ -645,8 +677,14 @@ void RenderGround()
 	glColor3f(1, 1, 1);	// Dim the ground texture a bit
 
 	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
+	if (isNight) {
+		glBindTexture(GL_TEXTURE_2D, tex_road.texture[0]);	// Bind the ground texture
+
+	}
+	else {
 
 	glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
+	}
 	int centerx = ((int)player.x / 4) * 4;
 	int centerz = ((int)player.z / 4) * 4;
 
@@ -860,7 +898,7 @@ void display(void)
 	ShowCursor(false);
 	InitLightSource();
 	InitMaterial();
-
+	
 	glColor3f(0, 0, 0);
 
 	drawSun();
@@ -868,6 +906,10 @@ void display(void)
 	RenderObsticles();
 	RenderCoins();
 	RenderMap();
+	glPushMatrix();
+	glTranslatef(5, 0, 0);
+	model_can.Draw();
+	glPopMatrix();
 	RenderEnemy();
 	if (view != 1)
 		RenderPlayer();
@@ -878,7 +920,14 @@ void display(void)
 	glTranslated(player.x, 0, player.z);
 	glColor3f(0.7+skyDim, 0.7+skyDim, 0.7+skyDim);
 	glRotated(90, 1, 0, 1);
-	glBindTexture(GL_TEXTURE_2D, tex_sky);
+	if (isNight) {
+		glBindTexture(GL_TEXTURE_2D, tex_sky_night);
+
+	}
+	else {
+	     glBindTexture(GL_TEXTURE_2D, tex_sky);
+
+	}
 	gluQuadricTexture(qobj, true);
 	gluQuadricNormals(qobj, GL_SMOOTH);
 	gluSphere(qobj, 200, 100, 100);
@@ -890,14 +939,20 @@ void display(void)
 }
 void tick(int value) {
 	move();
-	moveEnemy();
-	if (sunDim >= -0.7) {
+	//moveEnemy();
+	if (!isNight) {
+		if (sunDim >= -0.5) {
 
-	sunDim -= 0.001;
+			sunDim -= 0.0005;
+		}
+		if (skyDim >= -0.5) {
+			skyDim -= 0.0001;
+		}
+		if (light1 >= -0.8) {
+			light1 -= 0.0001;
+		}
 	}
-	if (skyDim >= -0.5) {
-		skyDim -= 0.001;
-	}
+	
 	rotateSun();
 	if (cameraUp && (angleUp - 4 > -90)) {
 		angleUp -= 4;
@@ -981,15 +1036,22 @@ void LoadAssets()
 {
 	model_player.Load("Models/player/man.3ds");
 	model_enemy.Load("models/enemy/2.3ds");
+	model_can.Load("models/cola/Pot Cola N260411.3ds");
+	model_drink.Load("models/drink/drink.3ds");
+	model_car.Load("models/car/Car 1960s car body and wheels N111122.3ds");
+    
 
 	model_building1.Load("Models/building1/Tower Constantino Eleninskaya Kremlin N120615.3DS");
 	model_coin.Load("Models/gold/gold.3ds");
 	tex_ground.Load("Textures/street.bmp");
 	tex_sun.Load("Textures/sun.bmp");
+	tex_moon.Load("Textures/moon.bmp");
+	tex_road.Load("Textures/esfalt.bmp");
 
 	loadBMP(&tex_eye, "Models/enemy/eye.bmp", true);
 
 	loadBMP(&tex_sky, "Textures/blu-sky-3.bmp", true);
+	loadBMP(&tex_sky_night, "Textures/night.bmp", true);
 	O = obj_create("D:\Downloads\bge\Alien+Animal+Actions_Baked_BGE.obj");
 
 }
