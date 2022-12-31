@@ -108,6 +108,8 @@ double mouseY = 0;
 double sunDim = 0;
 double skyDim = 0;
 double light1 = 0;
+double flicker = 1;
+double toFlicker = 50;
 bool isNight = true;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
@@ -132,20 +134,27 @@ Vector3f front = Vector3f(1, 1, 0);
 
 Vector3f player = Vector3f(0, 0, 0);
 Vector3f playerV = Vector3f(0, 0, 0);
+Vector3f target = Vector3f(0, 0, 0);
+
+
 Vector3f sun = Vector3f(130, 160, 40);
 Vector3f enemy = Vector3f(0, 0, -35);
 Vector3f enemyNextTarget = Vector3f(0, -1, 0);
 double enemySpeed = 0.25;
 
-int cameraZoom = 0;
+
 Model_3DS model_player;
 Model_3DS model_enemy;
+Model_3DS model_building1;
+Model_3DS model_coin;
+Model_3DS model_target;
 Model_3DS model_can;
 Model_3DS model_car;
 Model_3DS model_lightPost;
-
-
 Model_3DS model_drink;
+vector<Model_3DS> model_character;
+
+
 GLuint tex_sky;
 GLuint tex_sky_night;
 GLTexture tex_sun;
@@ -153,9 +162,7 @@ GLTexture tex_moon;
 GLuint tex_eye;
 GLTexture tex_road;
 GLTexture tex_ground;
-Model_3DS model_building1;
-Model_3DS model_coin;
-obj* O;
+
 
 
 
@@ -223,34 +230,46 @@ void InitLightSource()
 {
 	// Enable Lighting for this OpenGL Program
 	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT1);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT2);
 
 	if (isNight) {
 		//camera lights
-		GLfloat lightIntensity[] = {1.0f,1.0f,1.0f, 1.0f };
-		GLfloat light2_Position[] = { 0.0f,0.0f, 0.0f, 0.0f };
-		glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
-		glLightfv(GL_LIGHT0, GL_POSITION, light2_Position);
+		glEnable(GL_LIGHT2);
+		GLfloat light2Intensity[] = { 0.2f,0.2f,0.2f, 1.0f };
+		GLfloat light2_Position[] = { eye.x,eye.y,eye.z, 0.0f };
+		glLightfv(GL_LIGHT2, GL_DIFFUSE, light2Intensity);
+		glLightfv(GL_LIGHT2, GL_POSITION, light2_Position);
+
+		//LIGHT POTS 
+		glEnable(GL_LIGHT3);
+		GLfloat l3Direction[] = { 0.0, -1.0, 0.0 };
+		GLfloat light3Intensity[] = { 1.0f,0.0f,0.0f, 1.0f };
+		GLfloat light3_Position[] = {5,player.y, player.z, 0.0f };
+		glLightf(GL_LIGHT3, GL_SPOT_CUTOFF, 30.0);
+		glLightf(GL_LIGHT3, GL_SPOT_EXPONENT, 90.0);
+		glLightfv(GL_LIGHT3, GL_DIFFUSE, light3Intensity);
+		glLightfv(GL_LIGHT3, GL_POSITION, light3_Position);
+		glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, l3Direction);
 	}
 	else {
 		//camera lights
-		GLfloat light1Intensity[] = { 1.0 + light1, 1.0 + light1 ,1.0 + light1, 1.0f };
+		glEnable(GL_LIGHT1);
+		GLfloat light1Intensity[] = {1.0 + light1, 1.0 + light1 ,1.0 + light1, 1.0f};
 		GLfloat light1_Position[] = { 0.0f,0.0f, 0.0f, 0.0f };
-		glLightfv(GL_LIGHT0, GL_AMBIENT, light1Intensity);
-		glLightfv(GL_LIGHT0, GL_POSITION, light1_Position);
+
+		glLightfv(GL_LIGHT1, GL_DIFFUSE, light1Intensity);
+		glLightfv(GL_LIGHT1, GL_POSITION, light1_Position);
 
 		//sun lights
-		GLfloat light0Intensity[] = { 1.0 , 1.0+sunDim ,0.93+sunDim, 1.0f };
+		glEnable(GL_LIGHT0);
+		GLfloat light0Intensity[] = { 1.0 , 1.0 + sunDim ,0.93 + sunDim, 1.0f };
 		GLfloat light0_position[] = { sun.x, sun.y, sun.z,0 };
 		glLightfv(GL_LIGHT0, GL_AMBIENT, light0Intensity);
 		glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
 	}
-	
 
-	
-	
+	glDisable(GL_LIGHTING);
+
+
 }
 void InitMaterial()
 {
@@ -285,7 +304,9 @@ void myInit(void)
 
 	gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, up.x, up.y, up.z);
 }
+void restart() {
 
+}
 
 
 bool isBuilding(int x, int z) {
@@ -308,12 +329,11 @@ bool isObsticle(int x, int z) {
 	}
 }
 bool isCoin(int x, int z) {
-	if (x == 0 && z == 0)return false;
-	return(x % 7 == 0) && (z % 7 == 0) && (find(takenCoins.begin(), takenCoins.end(), (pair<int, int>{x, z})) == takenCoins.end()) && !isBuilding(x, z);
+	return (x % 7 == 0) && (z % 7 == 0) && (x != target.x || z != target.z) && (((x / 7 % 15) + (z / 7 % 15)) % 7 == 0) && (find(takenCoins.begin(), takenCoins.end(), (pair<int, int>{x, z})) == takenCoins.end()) && !isBuilding(x, z);
 }
 bool isLightPost(int x, int z) {
-	if (x == 0 && z == 0||isBuilding(x,z))return false;
-	return (x % 7== 0) && (z % 7 == 0);
+	if (x == 0 && z == 0 )return false;
+	return (x % 7 == 0) && (z % 7 == 0)&& !isBuilding(x, z);
 }
 
 
@@ -350,6 +370,7 @@ void isFreeThenMove(Vector3f acc) {
 
 
 	}
+	
 
 	if (isCoin((int)round(player.x), (int)round(player.z)) && player.y <= 1) {
 		if (takenCoins.size() > 20)takenCoins.pop_front();
@@ -358,9 +379,10 @@ void isFreeThenMove(Vector3f acc) {
 
 		}
 		else {
-		      sndPlaySound(TEXT("sounds/collection.wav"), SND_ASYNC | SND_FILENAME);
+			sndPlaySound(TEXT("sounds/collection.wav"), SND_ASYNC | SND_FILENAME);
 
 		}
+		score++;
 		takenCoins.push_back(pair<int, int>{(int)round(player.x), (int)round(player.z)});
 	}
 }
@@ -391,19 +413,6 @@ void move() {
 	}
 	acc += playerV;
 	playerV += Vector3f(0, -0.0098, 0);
-	/*
-	if (acc.x != 0 || acc.y != 0 || acc.z != 0) {
-		player += acc.unit() / 4;
-	}
-	if (playerV.y != 0) {
-		player += playerV;
-		playerV += Vector3f(0, -0.0098, 0);
-		if (player.y < 0) {
-			player.y = 0;
-			playerV.y = 0;
-		}
-	}
-	*/
 
 	isFreeThenMove(acc);
 }
@@ -497,6 +506,9 @@ void rotateSun() {
 
 
 
+
+
+
 void drawCoin(int x, int z) {
 	glPushMatrix();
 	if (isNight) {
@@ -508,7 +520,7 @@ void drawCoin(int x, int z) {
 
 	}
 	else {
-	   glTranslatef(0, -0.4, 0);
+		glTranslatef(0, -0.4, 0);
 		glRotatef(angleCoin + (x + 1) * (z + 1) * 7, 0, 1, 0);
 		glRotatef(90, 1, 0, 0);
 		glScalef(0.6, 0.6, 0.6);
@@ -519,6 +531,7 @@ void drawCoin(int x, int z) {
 }
 void drawSun() {
 	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glTranslatef(sun.x + player.x, sun.y, sun.z + player.z);
 	if (isNight) {
@@ -526,7 +539,7 @@ void drawSun() {
 	}
 	else {
 
-	glColor3f(1, 1+sunDim, 0); //dim 
+		glColor3f(1, 1 + sunDim, 0); //dim 
 	}
 	GLUquadricObj* qfoot;
 	qfoot = gluNewQuadric();
@@ -535,20 +548,21 @@ void drawSun() {
 
 	}
 	else {
-	glBindTexture(GL_TEXTURE_2D, tex_sun.texture[0]);
+		glBindTexture(GL_TEXTURE_2D, tex_sun.texture[0]);
 
 	}
 	gluQuadricNormals(qfoot, GL_SMOOTH);
 	gluQuadricTexture(qfoot, GL_TRUE);
 	gluSphere(qfoot, 20, 20, 20);
 	gluDeleteQuadric(qfoot);
-	glDisable(GL_TEXTURE_2D);
 	glPopMatrix();
+	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
 
 }
-void drawSphere(double x, double y, double z,double r, GLuint tex) {
+void drawSphere(double x, double y, double z, double r, GLuint tex) {
 	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
 	glPushMatrix();
 	GLUquadricObj* qobj;
 
@@ -561,39 +575,61 @@ void drawSphere(double x, double y, double z,double r, GLuint tex) {
 	gluSphere(qobj, r, 100, 100);
 	gluDeleteQuadric(qobj);
 	glPopMatrix();
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_LIGHTING);
+
+}
+void drawCircle(Vector3f pos, float ir, float r) {
+	glPushMatrix();
+	glTranslatef(pos.x, pos.y, pos.z);
+	glRotatef(90, 0, 1, 0);
+	GLUquadric* quadObj = gluNewQuadric();
+	gluDisk(quadObj, ir, r, 50, 50);
+	glPopMatrix();
+
+}
+void print(Vector3f pos, string string) {
+	int len, i;
+	glRasterPos3f(pos.x, pos.y, pos.z);
+	len = string.size();
+	for (i = 0; i < len; i++)
+	{
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, string[i]);
+	}
+}
+void drawLightPost() {
+	glDisable(GL_LIGHTING);
+	glPushMatrix();
+	glScalef(0.01, 0.01, 0.01);
+	glColor3f(0.2,0.2, flicker);
+	model_lightPost.Draw();
+	glPopMatrix();
 	glEnable(GL_LIGHTING);
 
+
 }
-void drawCircle(int x, int y, float r, bool solid) {
+
+void renderTarget() {
 	glPushMatrix();
-	glTranslatef(x, y, 0);
-	GLUquadric* quadObj = gluNewQuadric();
-	gluDisk(quadObj, solid ? 0 : r - 4, r, 50, 50);
+	glColor3f(1, 1, 1);
+	glTranslatef(target.x, 0, target.z);
+	glRotatef(angleCoin, 0, 1, 0);
+	model_target.Draw();
 	glPopMatrix();
-
 }
-
-void drawLightPost(int x, int z) {
-	glPushMatrix();
-	glScalef(0.02, 0.02, 0.02);
-    model_lightPost.Draw();
-	glPopMatrix();
-
-}
-void RenderCoins()
+void renderCoins()
 
 {
 
 
 
-	glColor3f(1, 1, 1);	// Dim the ground texture a bit
 
 	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
+	glColor3f(1, 1, 1);
 
 	glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
 	int centerx = (int)(player.x / 7) * 7;
 	int centerz = (int)(player.z / 7) * 7;
-
 
 	for (int x = -28 + centerx;x - centerx <= 28;x += 7) {
 		for (int z = -28 + centerz;z - centerz <= 28;z += 7) {
@@ -605,19 +641,37 @@ void RenderCoins()
 			}
 		}
 	}
-
-
-
-
-	glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
+	glDisable(GL_TEXTURE_2D);
 }
-void RenderMap()
+void renderLightPosts()
 
 {
 
 
-	glColor3f(1, 1, 1);	// Dim the ground texture a bit
+	int centerx = ((int)player.x / 7) * 7;
+	int centerz = ((int)player.z / 7) * 7;
 
+
+	for (int x = -28 + centerx;x - centerx <= 28;x += 7) {
+		for (int z = -28 + centerz;z - centerz <= 28;z += 7) {
+			if (isLightPost(x, z)) {
+				glPushMatrix();
+				glTranslatef(x-3,0, z-3);
+				drawLightPost();
+				glPopMatrix();
+
+			}
+		}
+	}
+	glDisable(GL_TEXTURE_2D);
+}
+void renderMap()
+
+{
+
+
+	glColor3f(1, 1, 1);
+	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
 
 	int centerx = round(player.x / 7.0);
 	int centerz = round(player.z / 7.0);
@@ -639,21 +693,15 @@ void RenderMap()
 			}
 		}
 	}
-
-
-
-
-	glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
+	glDisable(GL_TEXTURE_2D);
 }
-
-void RenderObsticles()
+void renderObsticles()
 
 {
 
+	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
 
-
-	glColor3f(1, 1, 1);	// Dim the ground texture a bit
-
+	glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
 	int centerx = ((int)player.x / 4) * 4;
 	int centerz = ((int)player.z / 4) * 4;
 
@@ -664,6 +712,7 @@ void RenderObsticles()
 				glPushMatrix();
 				glTranslatef(x, 0.501, z);
 				if (isNight) {
+
 					glColor3f(0, 0, 0);
 					glutSolidCube(1);
 				}
@@ -671,57 +720,27 @@ void RenderObsticles()
 					glColor3f(0, 0, 0);
 					glutSolidCube(1);
 				}
-			
+
 				//drawCoin();
 				glPopMatrix();
 			}
 		}
 	}
-
-
-
-	glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
+	glDisable(GL_TEXTURE_2D);
 }
-void RenderLightPosts()
+void renderGround()
 
 {
-
-
-	int centerx = ((int)player.x / 7) * 7;
-	int centerz = ((int)player.z / 7) * 7;
-
-
-	for (int x = -28 + centerx;x - centerx <= 28;x += 7) {
-		for (int z = -28 + centerz;z - centerz <= 28;z += 7) {
-			if (isLightPost(x, z)) {
-				glPushMatrix();
-				glTranslatef(x, -0.5, z);
-				drawLightPost(x, z);
-				glPopMatrix();
-
-			}
-		}
-	}
-
-
-
-	glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
-}
-void RenderGround()
-
-{
-
-
-	glColor3f(1, 1, 1);	// Dim the ground texture a bit
 
 	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
+	glColor3f(1, 1, 1);
 	if (isNight) {
 		glBindTexture(GL_TEXTURE_2D, tex_road.texture[0]);	// Bind the ground texture
 
 	}
 	else {
 
-	glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
+		glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
 	}
 	int centerx = ((int)player.x / 4) * 4;
 	int centerz = ((int)player.z / 4) * 4;
@@ -743,16 +762,13 @@ void RenderGround()
 			glPopMatrix();
 		}
 	}
-
-
-
-	glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
+	glDisable(GL_TEXTURE_2D);
 }
-void RenderEnemy() {
+void renderEnemy() {
 	double dot = player.z - enemy.z;
 	double det = player.x - enemy.x;
 	double angle = rad2deg(atan2(det, dot));
-	glPushMatrix();
+	glColor3f(1.0, 1.0, 1.0);
 	glPushMatrix();
 	glTranslated(enemy.x, enemy.y, enemy.z - 0.02);
 	glRotatef(angle, 0, 1, 0);
@@ -761,23 +777,58 @@ void RenderEnemy() {
 	glScalef(0.15, 0.15, 0.15);
 
 	model_enemy.Draw();
-	//obj_render(spider);
-	glPopMatrix();
 	glPopMatrix();
 
 }
-void RenderPlayer() {
-	glPushMatrix();
+void renderPlayer() {
 	glPushMatrix();
 	glTranslated(player.x, player.y, player.z - 0.02);
 	glRotatef(angleFront + 90, 0, 1, 0);
 	glScalef(0.015, 0.015, 0.015);
 	model_player.Draw();
+	//model_character[5].Draw();
 
-	//obj_render(spider);
-	glPopMatrix();
 	glPopMatrix();
 
+}
+
+
+
+
+
+
+void renderScreen() {
+	glDisable(GL_LIGHTING);
+	glDisable(GL_COLOR_MATERIAL);
+
+	double dot = (target.x - player.x) * front.x + (target.z - player.z) * front.z;
+	double det = -(target.x - player.x) * front.z + (target.z - player.z) * front.x;
+	double angle = rad2deg(atan2(det, dot));
+
+	glPushMatrix();
+	glColor3f(1, 1, 1);
+	Vector3f where = eye + (center - eye).unit() * 0.2;
+	glTranslatef(where.x, where.y, where.z);
+	glRotatef(angleFront, 0, 1, 0);
+	glRotatef(-angleUp, 0, 0, 1);
+	print(Vector3f(0, 0.04, 0.119), to_string(score));
+	drawCircle(Vector3f(0, 0.06, 0.12), 0, 0.015);
+	glColor3f(1, 0, 0);
+	drawCircle(Vector3f(-0.0001, 0.06, 0.12), 0.01, 0.0125);
+	glTranslatef(0, 0.06, 0.12);
+	glRotated(angle, 1, 0, 0);
+	glTranslatef(0, 0.0115, 0);
+	glBegin(GL_QUADS);
+	glVertex3f(-0.0001, -0.003, 0);
+	glVertex3f(-0.0001, 0, -0.003);
+	glVertex3f(-0.0001, 0.003, 0);
+	glVertex3f(-0.0001, 0, 0.003);
+	glEnd();
+
+	glPopMatrix();
+
+	glEnable(GL_COLOR_MATERIAL);
+	glEnable(GL_LIGHTING);
 }
 
 void Special(int key, int x, int y) {
@@ -918,49 +969,41 @@ void myMouse(int x, int y)
 	SetCursorPos(500, 500);
 }
 
-void print(Vector3f pos, string string)
-{	
-	int len, i;
-
-	glRasterPos3f(pos.x, pos.y, pos.z);
-	len = string.size();
-	for (i = 0; i < len; i++)
-	{
-		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, string[i]);
-	}
-
-}
 void display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	ShowCursor(false);
 	InitLightSource();
 	InitMaterial();
-	
-	glColor3f(0, 0, 0);
 
+
+	//rendering
+	//renderTarget();
 	drawSun();
-	RenderGround();// Draw Ground
-	RenderObsticles();
-	RenderCoins();
-	RenderMap();
-	RenderLightPosts();
-	RenderEnemy();
+	renderGround();// Draw Ground
+	renderObsticles();
+	renderCoins();
+	renderScreen();
+	renderMap();
+	if (isNight) {
+		renderLightPosts();
+	}
+	renderEnemy();
 	if (view != 1)
-		RenderPlayer();
+		renderPlayer();
 
 	glPushMatrix();
 	GLUquadricObj* qobj;
 	qobj = gluNewQuadric();
 	glTranslated(player.x, 0, player.z);
-	glColor3f(0.7+skyDim, 0.7+skyDim, 0.7+skyDim);
+	glColor3f(0.7 + skyDim, 0.7 + skyDim, 0.7 + skyDim);
 	glRotated(90, 1, 0, 1);
 	if (isNight) {
 		glBindTexture(GL_TEXTURE_2D, tex_sky_night);
 
 	}
 	else {
-	     glBindTexture(GL_TEXTURE_2D, tex_sky);
+		glBindTexture(GL_TEXTURE_2D, tex_sky);
 
 	}
 	gluQuadricTexture(qobj, true);
@@ -969,11 +1012,17 @@ void display(void)
 	gluDeleteQuadric(qobj);
 	glPopMatrix();
 
-	
+
 	glutSwapBuffers();
 }
 void tick(int value) {
 	move();
+	toFlicker--;
+	if (toFlicker <= 0) {
+		toFlicker = 50;
+		flicker = !flicker;
+	}
+
 	//moveEnemy();
 	if (!isNight) {
 		if (sunDim >= -0.6) {
@@ -987,7 +1036,7 @@ void tick(int value) {
 			light1 -= 0.0001;
 		}
 	}
-	
+
 	rotateSun();
 	if (cameraUp && (angleUp - 4 > -90)) {
 		angleUp -= 4;
@@ -1073,22 +1122,52 @@ void LoadAssets()
 	model_enemy.Load("models/enemy/2.3ds");
 	model_can.Load("models/cola/Pot Cola N260411.3ds");
 	model_drink.Load("models/drink/drink.3ds");
-	model_lightPost.Load("models/lightPost/Lamppost N140708.3ds");
+	model_lightPost.Load("models/lightPost/lightpost.3ds");
 	model_car.Load("models/car/Car 1960s car body and wheels N111122.3ds");
-    
-
+	model_target.Load("models/cola/Pot Cola N260411.3ds");
 	model_building1.Load("Models/building1/Tower Constantino Eleninskaya Kremlin N120615.3DS");
 	model_coin.Load("Models/gold/gold.3ds");
 	tex_ground.Load("Textures/street.bmp");
 	tex_sun.Load("Textures/sun.bmp");
 	tex_moon.Load("Textures/moon.bmp");
 	tex_road.Load("Textures/esfalt.bmp");
-
+	//player
+	/*Model_3DS c_6;
+	c_6.Load("Models/spartan/-6.3DS");
+	Model_3DS c_5;
+	c_5.Load("Models/spartan/-5.3DS");
+	Model_3DS c_4;
+	c_4.Load("Models/spartan/-4.3DS");
+	Model_3DS c_3;
+	c_3.Load("Models/spartan/-3.3DS");
+	Model_3DS c_2;
+	c_2.Load("Models/spartan/-2.3DS");
+	Model_3DS c_1;
+	c_1.Load("Models/spartan/-1.3DS");
+	Model_3DS c1;
+	c1.Load("Models/spartan/1.3DS");
+	Model_3DS c2;
+	c2.Load("Models/spartan/2.3DS");
+	Model_3DS c3;
+	c3.Load("Models/spartan/3.3DS");
+	Model_3DS c4;
+	c4.Load("Models/spartan/4.3DS");
+	Model_3DS c5;
+	c5.Load("Models/spartan/5.3DS");
+	model_character.push_back(c_6);
+	model_character.push_back(c_5);
+	model_character.push_back(c_4);
+	model_character.push_back(c_3);
+	model_character.push_back(c_2);
+	model_character.push_back(c_1);
+	model_character.push_back(c1);
+	model_character.push_back(c2);
+	model_character.push_back(c3);
+	model_character.push_back(c4);*/
 	loadBMP(&tex_eye, "Models/enemy/eye.bmp", true);
 
 	loadBMP(&tex_sky, "Textures/blu-sky-3.bmp", true);
 	loadBMP(&tex_sky_night, "Textures/night.bmp", true);
-	O = obj_create("D:\Downloads\bge\Alien+Animal+Actions_Baked_BGE.obj");
 
 }
 void main(int argc, char** argv)
