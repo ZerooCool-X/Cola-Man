@@ -88,6 +88,10 @@ public:
 	Vector3f cross(Vector3f v) {
 		return Vector3f(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
 	}
+	double dis(Vector3f v) {
+		return sqrt((x - v.x) * (x - v.x) + (y - v.y) * (y - v.y) + (z - v.z) * (z - v.z));
+	}
+
 };
 int WIDTH = 1450;
 int HEIGHT = 750;
@@ -103,12 +107,13 @@ bool cameraRight = FALSE;
 bool cameraLeft = FALSE;
 int jump = 0;
 int view = 1;
+int health = 3;
 double mouseX = 0;
 double mouseY = 0;
 double sunDim = 0;
 double skyDim = 0;
 double light1 = 0;
-bool isNight = true;
+bool isNight = false;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
 
@@ -132,7 +137,7 @@ Vector3f front = Vector3f(1, 1, 0);
 
 Vector3f player = Vector3f(0, 0, 0);
 Vector3f playerV = Vector3f(0, 0, 0);
-Vector3f target = Vector3f(0, 0, 0);
+Vector3f target = Vector3f(((Hash(rand()) % 3 + 2) * 15 + 5) * 7, 0, ((Hash(rand()) % 3 + 2) * 15 + 6) * 7);
 
 
 Vector3f sun = Vector3f(130, 160, 40);
@@ -149,14 +154,15 @@ Model_3DS model_target;
 Model_3DS model_can;
 Model_3DS model_car;
 Model_3DS model_lightPost;
-
-
 Model_3DS model_drink;
+
+
 GLuint tex_sky;
 GLuint tex_sky_night;
+GLuint tex_eye;
+
 GLTexture tex_sun;
 GLTexture tex_moon;
-GLuint tex_eye;
 GLTexture tex_road;
 GLTexture tex_ground;
 
@@ -233,7 +239,7 @@ void InitLightSource()
 
 	if (isNight) {
 		//camera lights
-		GLfloat lightIntensity[] = {1.0f,1.0f,1.0f, 1.0f };
+		GLfloat lightIntensity[] = { 1.0f,1.0f,1.0f, 1.0f };
 		GLfloat light2_Position[] = { 0.0f,0.0f, 0.0f, 0.0f };
 		glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
 		glLightfv(GL_LIGHT0, GL_POSITION, light2_Position);
@@ -246,15 +252,15 @@ void InitLightSource()
 		glLightfv(GL_LIGHT0, GL_POSITION, light1_Position);
 
 		//sun lights
-		GLfloat light0Intensity[] = { 1.0 , 1.0+sunDim ,0.93+sunDim, 1.0f };
+		GLfloat light0Intensity[] = { 1.0 , 1.0 + sunDim ,0.93 + sunDim, 1.0f };
 		GLfloat light0_position[] = { sun.x, sun.y, sun.z,0 };
 		glLightfv(GL_LIGHT0, GL_AMBIENT, light0Intensity);
 		glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
 	}
-	
 
-	
-	
+
+
+
 }
 void InitMaterial()
 {
@@ -289,8 +295,20 @@ void myInit(void)
 
 	gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, up.x, up.y, up.z);
 }
-void restart() {
-
+void restart(bool youWon) {
+	player = Vector3f(0, 0, 0);
+	playerV = Vector3f(0, 0, 0);
+	target = Vector3f(((Hash(rand()) % 3 + 2) * 15 + 5) * 7, 0, ((Hash(rand()) % 3 + 2) * 15 + 6) * 7);
+	sun = Vector3f(130, 160, 40);
+	enemy = Vector3f(0, 0, -35);
+	enemyNextTarget = Vector3f(0, -1, 0);
+	double enemySpeed = 0.25;
+	if (youWon) {
+		isNight = true;
+	}
+	else {
+		health--;
+	}
 }
 
 
@@ -314,7 +332,7 @@ bool isObsticle(int x, int z) {
 	}
 }
 bool isCoin(int x, int z) {
-	return (x % 7 == 0) && (z % 7 == 0) &&(x!=target.x||z!=target.z) && (((x / 7 % 15) + (z / 7 % 15)) % 7 == 0) && (find(takenCoins.begin(), takenCoins.end(), (pair<int, int>{x, z})) == takenCoins.end()) && !isBuilding(x, z);
+	return (x % 7 == 0) && (z % 7 == 0) && (x != target.x || z != target.z) && ((Hash(x) + Hash(z)) % 10 == 0) && (find(takenCoins.begin(), takenCoins.end(), (pair<int, int>{x, z})) == takenCoins.end()) && !isBuilding(x, z);
 }
 
 
@@ -360,20 +378,13 @@ void isFreeThenMove(Vector3f acc) {
 
 		}
 		else {
-		      sndPlaySound(TEXT("sounds/collection.wav"), SND_ASYNC | SND_FILENAME);
+			sndPlaySound(TEXT("sounds/collection.wav"), SND_ASYNC | SND_FILENAME);
 
 		}
 		score++;
 		takenCoins.push_back(pair<int, int>{(int)round(player.x), (int)round(player.z)});
 	}
 }
-/*sndPlaySound(TEXT("sounds/monster.wav"), SND_ASYNC | SND_FILENAME);
-
-double getDistance() {
-	return sqrt(abs((player.x - enemy.x) * (player.x - enemy.x) +
-		(player.y - enemy.y) * (player.y - enemy.y) +
-		(player.z - enemy.z) * (player.z - enemy.z)));
-}*/
 void move() {
 	Vector3f acc = Vector3f(0, 0, 0);
 	if (movingFront) {
@@ -501,7 +512,7 @@ void drawCoin(int x, int z) {
 
 	}
 	else {
-	   glTranslatef(0, -0.4, 0);
+		glTranslatef(0, -0.4, 0);
 		glRotatef(angleCoin + (x + 1) * (z + 1) * 7, 0, 1, 0);
 		glRotatef(90, 1, 0, 0);
 		glScalef(0.6, 0.6, 0.6);
@@ -520,7 +531,7 @@ void drawSun() {
 	}
 	else {
 
-	glColor3f(1, 1+sunDim, 0); //dim 
+		glColor3f(1, 1 + sunDim, 0); //dim 
 	}
 	GLUquadricObj* qfoot;
 	qfoot = gluNewQuadric();
@@ -529,7 +540,7 @@ void drawSun() {
 
 	}
 	else {
-	glBindTexture(GL_TEXTURE_2D, tex_sun.texture[0]);
+		glBindTexture(GL_TEXTURE_2D, tex_sun.texture[0]);
 
 	}
 	gluQuadricNormals(qfoot, GL_SMOOTH);
@@ -541,7 +552,7 @@ void drawSun() {
 	glEnable(GL_LIGHTING);
 
 }
-void drawSphere(double x, double y, double z,double r, GLuint tex) {
+void drawSphere(double x, double y, double z, double r, GLuint tex) {
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 	glPushMatrix();
@@ -560,7 +571,7 @@ void drawSphere(double x, double y, double z,double r, GLuint tex) {
 	glEnable(GL_LIGHTING);
 
 }
-void drawCircle(Vector3f pos,float ir, float r) {
+void drawCircle(Vector3f pos, float ir, float r) {
 	glPushMatrix();
 	glTranslatef(pos.x, pos.y, pos.z);
 	glRotatef(90, 0, 1, 0);
@@ -569,6 +580,22 @@ void drawCircle(Vector3f pos,float ir, float r) {
 	glPopMatrix();
 
 }
+void drawTriangle(double x1, double y1, double x2, double y2, double x3, double y3) {
+	glBegin(GL_TRIANGLES);
+	glVertex3f(0, y1,	x1);
+	glVertex3f(0, y2,	x2);
+	glVertex3f(0, y3,	x3);
+	glEnd();
+}
+void drawHealth(int x, int y) {
+	glPushMatrix();
+	glScalef(0.0003,0.0003,0.0003);
+	drawCircle(Vector3f(0, y + 14.8, x - 4.9),0, 5.22);
+	drawCircle(Vector3f(0, y + 14.8, x + 4.9), 0, 5.22);
+	drawTriangle(x, y, x - 9.8, y + 13, x + 9.8, y + 13);
+	glPopMatrix();
+}
+
 void print(Vector3f pos, string string) {
 	int len, i;
 	glRasterPos3f(pos.x, pos.y, pos.z);
@@ -581,7 +608,7 @@ void print(Vector3f pos, string string) {
 void drawLightPost(int x, int z) {
 	glPushMatrix();
 	glScalef(0.01, 0.01, 0.01);
-    model_lightPost.Draw();
+	model_lightPost.Draw();
 	glPopMatrix();
 }
 
@@ -657,8 +684,8 @@ void renderObsticles()
 	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
 
 	glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
-	int centerx = ((int)player.x / 4) * 4;
-	int centerz = ((int)player.z / 4) * 4;
+	int centerx = ((int)player.x);
+	int centerz = ((int)player.z);
 
 
 	for (int x = -30 + centerx;x - centerx <= 30;x++) {
@@ -667,7 +694,7 @@ void renderObsticles()
 				glPushMatrix();
 				glTranslatef(x, 0.501, z);
 				if (isNight) {
-					
+
 					glColor3f(0, 0, 0);
 					glutSolidCube(1);
 				}
@@ -675,7 +702,7 @@ void renderObsticles()
 					glColor3f(0, 0, 0);
 					glutSolidCube(1);
 				}
-			
+
 				//drawCoin();
 				glPopMatrix();
 			}
@@ -695,7 +722,7 @@ void renderGround()
 	}
 	else {
 
-	glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
+		glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
 	}
 	int centerx = ((int)player.x / 4) * 4;
 	int centerz = ((int)player.z / 4) * 4;
@@ -748,28 +775,36 @@ void renderScreen() {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_COLOR_MATERIAL);
 
-	double dot = (target.x - player.x) * front.x +(target.z - player.z)*front.z;
+	double dot = (target.x - player.x) * front.x + (target.z - player.z) * front.z;
 	double det = -(target.x - player.x) * front.z + (target.z - player.z) * front.x;
 	double angle = rad2deg(atan2(det, dot));
+	
 
 	glPushMatrix();
 	glColor3f(1, 1, 1);
-	Vector3f where = eye + (center - eye).unit()*0.2;
+	Vector3f where = eye + (center - eye).unit() * 0.2;
 	glTranslatef(where.x, where.y, where.z);
-	glRotatef(angleFront, 0, 1, 0);
+	glRotatef(angleFront + (view == 2 ? 180 : 0), 0, 1, 0);
 	glRotatef(-angleUp, 0, 0, 1);
 	print(Vector3f(0, 0.04, 0.119), to_string(score));
-	drawCircle(Vector3f(0, 0.06, 0.12),0, 0.015);
+	drawCircle(Vector3f(0, 0.06, 0.12), 0, 0.015);
 	glColor3f(1, 0, 0);
 	drawCircle(Vector3f(-0.0001, 0.06, 0.12), 0.01, 0.0125);
-	glTranslatef(0, 0.06, 0.12);
+
+	glTranslatef(-0.0001, 0.06, 0.12);
+	if(health>0)
+		drawHealth(0, 5);
+	if(health>1)
+		drawHealth(-15, -20);
+	if(health>2)
+		drawHealth(15, -20);
 	glRotated(angle, 1, 0, 0);
-	glTranslatef(0,0.0115,0);	
+	glTranslatef(0, 0.0115, 0);
 	glBegin(GL_QUADS);
-	glVertex3f(-0.0001, -0.003, 0 );
-	glVertex3f(-0.0001, 0, -0.003);
-	glVertex3f(-0.0001, 0.003, 0);
-	glVertex3f(-0.0001, 0, 0.003);
+	glVertex3f(0, -0.003, 0);
+	glVertex3f(0, 0, -0.003);
+	glVertex3f(0, 0.003, 0);
+	glVertex3f(0, 0, 0.003);
 	glEnd();
 
 	glPopMatrix();
@@ -872,11 +907,11 @@ void myKeyboard(unsigned char button, int x, int y)
 
 	glLoadIdentity();
 
+	glutPostRedisplay();
 	gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, up.x, up.y, up.z);
 
 
 
-	glutPostRedisplay();
 }
 void myKeyboardUp(unsigned char button, int x, int y) {
 	switch (button)
@@ -923,7 +958,7 @@ void display(void)
 	InitLightSource();
 	InitMaterial();
 
-	
+
 	//rendering
 	renderTarget();
 	drawSun();
@@ -940,14 +975,14 @@ void display(void)
 	GLUquadricObj* qobj;
 	qobj = gluNewQuadric();
 	glTranslated(player.x, 0, player.z);
-	glColor3f(0.7+skyDim, 0.7+skyDim, 0.7+skyDim);
+	glColor3f(0.7 + skyDim, 0.7 + skyDim, 0.7 + skyDim);
 	glRotated(90, 1, 0, 1);
 	if (isNight) {
 		glBindTexture(GL_TEXTURE_2D, tex_sky_night);
 
 	}
 	else {
-	     glBindTexture(GL_TEXTURE_2D, tex_sky);
+		glBindTexture(GL_TEXTURE_2D, tex_sky);
 
 	}
 	gluQuadricTexture(qobj, true);
@@ -956,12 +991,19 @@ void display(void)
 	gluDeleteQuadric(qobj);
 	glPopMatrix();
 
-	
+
 	glutSwapBuffers();
 }
 void tick(int value) {
 	move();
 	moveEnemy();
+
+	if (target.dis(player) < 2) {
+		restart(true);
+	}
+	if (enemy.dis(player) < 2) {
+		restart(false);
+	}
 	if (!isNight) {
 		if (sunDim >= -0.6) {
 
@@ -974,7 +1016,7 @@ void tick(int value) {
 			light1 -= 0.0001;
 		}
 	}
-	
+
 	rotateSun();
 	if (cameraUp && (angleUp - 4 > -90)) {
 		angleUp -= 4;
@@ -1062,7 +1104,7 @@ void LoadAssets()
 	model_drink.Load("models/drink/drink.3ds");
 	model_lightPost.Load("models/lightPost/Lamppost N140708.3ds");
 	model_car.Load("models/car/Car 1960s car body and wheels N111122.3ds");
-    
+
 
 	model_target.Load("Models/player/man.3ds");
 	model_building1.Load("Models/building1/Tower Constantino Eleninskaya Kremlin N120615.3DS");
