@@ -243,32 +243,74 @@ void InitLightSource()
 		//camera lights
 		glDisable(GL_LIGHT0);
 		glDisable(GL_LIGHT1);
-		glEnable(GL_LIGHT2);
+		glEnable(GL_LIGHT0);
 		bool s = true;
-		GLfloat l2Diffuse[] = { 0.7f, 0.7f, 0.7f, 1.0f };
-		GLfloat l2Spec[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-		GLfloat l2Ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		GLfloat l2Position[] = { eye.x, eye.y, eye.z, s};
-		GLfloat l2Direction[] = {front.x, front.y,front.z };
-		glLightfv(GL_LIGHT2, GL_DIFFUSE, l2Diffuse);
-		glLightfv(GL_LIGHT2, GL_POSITION, l2Position);
-		glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 30.0);
-		glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 90.0);
-		glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, l2Direction);
+		GLfloat l0Diffuse[] = { 0.7f, 0.7f, 0.7f, 1.0f };
+		GLfloat l0Spec[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+		GLfloat l0Ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		GLfloat l0Position[] = { eye.x, eye.y, eye.z, s};
+		GLfloat l0Direction[] = {front.x, front.y,front.z };
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, l0Diffuse);
+		glLightfv(GL_LIGHT0, GL_POSITION, l0Position);
+		glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 30.0);
+		glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 90.0);
+		glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, l0Direction);
+
+	
 
 		glEnable(GL_LIGHT3);
 		GLfloat l3Diffuse[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-		GLfloat l3spec[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-		GLfloat l3Ambient[] = { 1.0f, 1.0f, 1.0f, 0.0f };
-		GLfloat l3Position[] = { 5, 0.2, -3.5, 1 };
-		GLfloat l3Direction[] = { 0.1, 0,0 };
+		GLfloat l3Position[] = { 5, 20, -3, flicker };
+		GLfloat l3Direction[] = { 0, -1,0 };
 		glLightfv(GL_LIGHT3, GL_POSITION, l3Position);
 		glLightfv(GL_LIGHT3, GL_DIFFUSE, l3Diffuse);
-		//glLightfv(GL_LIGHT3, GL_AMBIENT, l3Ambient);
-
 		glLightf(GL_LIGHT3, GL_SPOT_CUTOFF, 30.0);
 		glLightf(GL_LIGHT3, GL_SPOT_EXPONENT, 90.0);
 		glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, l3Direction);
+
+		glEnable(GL_LIGHT2);
+		GLfloat l2Position[] = { -5, 20, -24, flicker };
+		glLightfv(GL_LIGHT2, GL_POSITION, l2Position);
+		glLightfv(GL_LIGHT2, GL_DIFFUSE, l3Diffuse);
+		glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 30.0);
+		glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 90.0);
+		glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, l3Direction);
+
+		glEnable(GL_LIGHT4);
+		GLfloat l4Position[] = { 13, 20, -3, flicker };
+		glLightfv(GL_LIGHT4, GL_POSITION, l4Position);
+		glLightfv(GL_LIGHT4, GL_DIFFUSE, l3Diffuse);
+		glLightf(GL_LIGHT4, GL_SPOT_CUTOFF, 30.0);
+		glLightf(GL_LIGHT4, GL_SPOT_EXPONENT, 90.0);
+		glLightfv(GL_LIGHT4, GL_SPOT_DIRECTION, l3Direction);
+
+		glEnable(GL_LIGHT5);
+		GLfloat l5Position[] = { 20, 20, -3, flicker };
+		glLightfv(GL_LIGHT5, GL_POSITION, l5Position);
+		glLightfv(GL_LIGHT5, GL_DIFFUSE, l3Diffuse);
+		glLightf(GL_LIGHT5, GL_SPOT_CUTOFF, 30.0);
+		glLightf(GL_LIGHT5, GL_SPOT_EXPONENT, 90.0);
+		glLightfv(GL_LIGHT5, GL_SPOT_DIRECTION, l3Direction);
+
+	
+
+		glEnable(GL_LIGHT6);
+		GLfloat l6Position[] = {-5 , 20, -10, flicker };
+		glLightfv(GL_LIGHT6, GL_POSITION, l6Position);
+		glLightfv(GL_LIGHT6, GL_DIFFUSE, l3Diffuse);
+		glLightf(GL_LIGHT6, GL_SPOT_CUTOFF, 30.0);
+		glLightf(GL_LIGHT6, GL_SPOT_EXPONENT, 90.0);
+		glLightfv(GL_LIGHT6, GL_SPOT_DIRECTION, l3Direction);
+
+		glEnable(GL_LIGHT7);
+		GLfloat l7Position[] = { -5, 20, -17, flicker };
+		glLightfv(GL_LIGHT7, GL_POSITION, l7Position);
+		glLightfv(GL_LIGHT7, GL_DIFFUSE, l3Diffuse);
+		glLightf(GL_LIGHT7, GL_SPOT_CUTOFF, 30.0);
+		glLightf(GL_LIGHT7, GL_SPOT_EXPONENT, 90.0);
+		glLightfv(GL_LIGHT7, GL_SPOT_DIRECTION, l3Direction);
+
+
 	}
 	else {
 		//camera lights
@@ -831,6 +873,7 @@ void renderPlayer() {
 	glRotatef(angleFront + 90, 0, 1, 0);
 	glScalef(0.015, 0.015, 0.015);
 	model_player.Draw();
+    //glRotatef(100, 1, 0, 1);
 	//model_character[5].Draw();
 
 	glPopMatrix();
@@ -1028,10 +1071,6 @@ void display(void)
 	ShowCursor(false);
 	InitLightSource();
 	InitMaterial();
-	cout << player.x << endl;
-	cout << player.z << endl;
-	cout << player.y << endl;
-
 	//rendering
 	renderTarget();
 	drawSun();
@@ -1182,7 +1221,7 @@ void LoadAssets()
 {
 	model_player.Load("Models/player/man.3ds");
 	model_enemy.Load("models/enemy/2.3ds");
-	model_can.Load("models/cola/Pot Cola N260411.3ds");
+	//model_can.Load("models/cola/Pot Cola N260411.3ds");
 	model_drink.Load("models/drink/drink.3ds");
 	model_lightPost.Load("models/lightPost/lightpost.3ds");
 	model_car.Load("models/ambulance/Car Ambulance N230610.3ds");
@@ -1227,7 +1266,6 @@ void LoadAssets()
 	model_character.push_back(c3);
 	model_character.push_back(c4);*/
 	loadBMP(&tex_eye, "Models/enemy/eye.bmp", true);
-
 	loadBMP(&tex_sky, "Textures/blu-sky-3.bmp", true);
 	loadBMP(&tex_sky_night, "Textures/night.bmp", true);
 
