@@ -986,14 +986,33 @@ void renderScreen() {
 	print(Vector3f(0, 0.04, 0.119), to_string(score));
 	if (playerSpeed == 1) {
 		if (loadingPower<8) {
-			print(Vector3f(0, 0.03, 0.1), "loading powerUp " + to_string((int)(8 - loadingPower)));
+			//print(Vector3f(0, 0.03, 0.1), "loading powerUp " + to_string((int)(8 - loadingPower)));
+			glPushMatrix();
+			glColor3f(0.04, 0.19, 0.125);
+			glBegin(GL_QUADS);
+			glVertex3f(0, 0.035, 0.1);
+			glVertex3f(0, 0.03, 0.1);
+			glVertex3f(0, 0.03, 0.1+loadingPower/200);
+			glVertex3f(0, 0.035, 0.1+ loadingPower / 200);
+			glEnd();
+			glPopMatrix();
 
 		}
 		else {
-			print(Vector3f(0, 0.03, 0.09), "press Q to activate powerUp");
+			print(Vector3f(0, 0.02, 0.09), "press Q to activate powerUp");
+			glPushMatrix();
+			glColor3f(0.5,flicker, 1.0);
+			glBegin(GL_QUADS);
+			glVertex3f(0, 0.035, 0.1);
+			glVertex3f(0, 0.03, 0.1);
+			glVertex3f(0, 0.03, 0.14);
+			glVertex3f(0, 0.035, 0.14);
+			glEnd();
+			glPopMatrix();
 
 		}
 	}
+	glColor3f(1, 1, 1);
 	drawCircle(Vector3f(0, 0.06, 0.12), 0, 0.015);
 	glColor3f(1, 0, 0);
 	drawCircle(Vector3f(-0.0001, 0.06, 0.12), 0.01, 0.0125);
