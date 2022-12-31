@@ -115,7 +115,7 @@ double skyDim = 0;
 double light1 = 0;
 double flicker = 1;
 double toFlicker = 50;
-bool isNight = false;
+bool isNight = true;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
 
@@ -236,27 +236,38 @@ void InitLightSource()
 {
 	// Enable Lighting for this OpenGL Program
 	glEnable(GL_LIGHTING);
+	GLfloat lmodel_ambient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
 
 	if (isNight) {
 		//camera lights
 		glDisable(GL_LIGHT0);
 		glDisable(GL_LIGHT1);
-
 		glEnable(GL_LIGHT2);
-		GLfloat light2Intensity[] = { 0.2f,0.2f,0.2f, 1.0f };
-		GLfloat light2_Position[] = { eye.x,eye.y,eye.z, 0.0f };
-		glLightfv(GL_LIGHT2, GL_DIFFUSE, light2Intensity);
-		glLightfv(GL_LIGHT2, GL_POSITION, light2_Position);
+		bool s = true;
+		GLfloat l2Diffuse[] = { 0.7f, 0.7f, 0.7f, 1.0f };
+		GLfloat l2Spec[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+		GLfloat l2Ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		GLfloat l2Position[] = { eye.x, eye.y, eye.z, s};
+		GLfloat l2Direction[] = {front.x, front.y,front.z };
+		glLightfv(GL_LIGHT2, GL_DIFFUSE, l2Diffuse);
+		glLightfv(GL_LIGHT2, GL_POSITION, l2Position);
+		glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 30.0);
+		glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 90.0);
+		glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, l2Direction);
 
-		//LIGHT POTS 
 		glEnable(GL_LIGHT3);
-		GLfloat l3Direction[] = { 0.0, -1.0, 0.0 };
-		GLfloat light3Intensity[] = { 1.0f,0.0f,0.0f, 1.0f };
-		GLfloat light3_Position[] = {5,player.y, player.z, 0.0f };
+		GLfloat l3Diffuse[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+		GLfloat l3spec[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+		GLfloat l3Ambient[] = { 1.0f, 1.0f, 1.0f, 0.0f };
+		GLfloat l3Position[] = { 5, 0.2, -3.5, 1 };
+		GLfloat l3Direction[] = { 0.1, 0,0 };
+		glLightfv(GL_LIGHT3, GL_POSITION, l3Position);
+		glLightfv(GL_LIGHT3, GL_DIFFUSE, l3Diffuse);
+		//glLightfv(GL_LIGHT3, GL_AMBIENT, l3Ambient);
+
 		glLightf(GL_LIGHT3, GL_SPOT_CUTOFF, 30.0);
 		glLightf(GL_LIGHT3, GL_SPOT_EXPONENT, 90.0);
-		glLightfv(GL_LIGHT3, GL_DIFFUSE, light3Intensity);
-		glLightfv(GL_LIGHT3, GL_POSITION, light3_Position);
 		glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, l3Direction);
 	}
 	else {
@@ -745,9 +756,10 @@ void renderObsticles()
 				glPushMatrix();
 				glTranslatef(x, 0.501, z);
 				if (isNight) {
-
-					glColor3f(0, 0, 0);
-					glutSolidCube(1);
+					glRotated(180, 0, 1, 0);
+					glTranslated(0, -0.5, 0);
+					glScalef(0.01, 0.02, 0.01);
+					model_car.Draw();
 				}
 				else {
 					glColor3f(0, 0, 0);
@@ -1016,7 +1028,9 @@ void display(void)
 	ShowCursor(false);
 	InitLightSource();
 	InitMaterial();
-
+	cout << player.x << endl;
+	cout << player.z << endl;
+	cout << player.y << endl;
 
 	//rendering
 	renderTarget();
@@ -1171,7 +1185,7 @@ void LoadAssets()
 	model_can.Load("models/cola/Pot Cola N260411.3ds");
 	model_drink.Load("models/drink/drink.3ds");
 	model_lightPost.Load("models/lightPost/lightpost.3ds");
-	model_car.Load("models/car/Car 1960s car body and wheels N111122.3ds");
+	model_car.Load("models/ambulance/Car Ambulance N230610.3ds");
 	model_target.Load("models/cola/bottle.3ds");
 	model_building1.Load("Models/building1/Tower Constantino Eleninskaya Kremlin N120615.3DS");
 	model_coin.Load("Models/gold/gold.3ds");
