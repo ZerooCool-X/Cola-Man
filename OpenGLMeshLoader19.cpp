@@ -119,6 +119,7 @@ double light1 = 0;
 double flicker = 1;
 double toFlicker = 50;
 bool isNight = false;
+bool isFalling = false;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
 
@@ -171,8 +172,6 @@ GLTexture tex_sun;
 GLTexture tex_moon;
 GLTexture tex_road;
 GLTexture tex_ground;
-
-
 
 
 
@@ -257,7 +256,7 @@ void InitLightSource()
 		GLfloat l0Spec[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 		GLfloat l0Ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		GLfloat l0Position[] = { eye.x, eye.y, eye.z, s };
-		GLfloat l0Direction[] = { center.x, center.y,center.z };
+		GLfloat l0Direction[] = { (center - eye).x, (center - eye).y,(center - eye).z };
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, l0Diffuse);
 		glLightfv(GL_LIGHT0, GL_POSITION, l0Position);
 		glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 30.0);
@@ -269,7 +268,7 @@ void InitLightSource()
 	else {
 		//camera lights
 		glEnable(GL_LIGHT0);
-		GLfloat light0Intensity[] = {1.0 + light1, 1.0 + light1 ,1.0 + light1, 1.0f};
+		GLfloat light0Intensity[] = { 1.0 + light1, 1.0 + light1 ,1.0 + light1, 1.0f };
 		GLfloat light0_Position[] = { 0.0f,0.0f, 0.0f, 0.0f };
 
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, light0Intensity);
@@ -327,6 +326,7 @@ void restart(bool youWon) {
 	sun = Vector3f(130, 160, 40);
 	enemy = Vector3f(0, 0, -35);
 	enemyNextTarget = Vector3f(0, -1, 0);
+	isFalling = false;
 	double enemySpeed = 0.25;
 	if (youWon) {
 		isNight = true;
@@ -365,8 +365,8 @@ bool isCoin(int x, int z) {
 	return (x % 7 == 0) && (z % 7 == 0) && (x != target.x || z != target.z) && ((Hash(x) + Hash(z)) % 10 == 0) && (find(takenCoins.begin(), takenCoins.end(), (pair<int, int>{x, z})) == takenCoins.end()) && !isBuilding(x, z);
 }
 bool isLightPost(int x, int z) {
-	if (x == 0 && z == 0 )return false;
-	return (x % 7 == 0) && (z % 7 == 0)&& !isBuilding(x, z);
+	if (x == 0 && z == 0)return false;
+	return (x % 7 == 0) && (z % 7 == 0) && !isBuilding(x, z);
 }
 
 
@@ -377,33 +377,37 @@ void isFreeThenMove(Vector3f acc) {
 		if (isBuilding((int)round(player.x + acc.x), (int)round(player.z + acc.z)))
 			acc = acc * Vector3f(1, 1, 0);
 	}
-	if (isObsticle((int)round(player.x + acc.x), (int)round(player.z + acc.z))) {
+	if (isObsticle((int)round(player.x + acc.x), (int)round(player.z + acc.z))&&isNight) {
+
 		if (player.y < 1) {
 			if (isObsticle((int)round(player.x + acc.x), (int)round(player.z)))
 				acc = acc * Vector3f(0, 1, 1);
 			if (isObsticle((int)round(player.x + acc.x), (int)round(player.z + acc.z)))
 				acc = acc * Vector3f(1, 1, 0);
-
 		}
 	}
 
 	player += acc;
 
 	//sun += Vector3f(acc.x-10, 0, acc.z - 10);
-	if (isObsticle((int)round(player.x), (int)round(player.z)) && player.y < 1) {
-		player.y = 1;
-		playerV.y = 0;
-		jump = 0;
-
+	if (isObsticle((int)round(player.x), (int)round(player.z)) ) {
+		if(isNight && (player.y<1)) {
+			player.y = 1;
+			playerV.y = 0;
+			jump = 0;
+		}
+		else if(player.y<0.1) {
+			isFalling = true;
+		}
 	}
-	else if (player.y < 0) {
+	else if (player.y < 0&&(!isFalling)) {
 		player.y = 0;
 		playerV.y = 0;
 		jump = 0;
 
 
 	}
-	
+
 
 	if (isCoin((int)round(player.x), (int)round(player.z)) && player.y <= 1) {
 		if (takenCoins.size() > 20)takenCoins.pop_front();
@@ -629,15 +633,15 @@ void drawCircle(Vector3f pos, float ir, float r) {
 }
 void drawTriangle(double x1, double y1, double x2, double y2, double x3, double y3) {
 	glBegin(GL_TRIANGLES);
-	glVertex3f(0, y1,	x1);
-	glVertex3f(0, y2,	x2);
-	glVertex3f(0, y3,	x3);
+	glVertex3f(0, y1, x1);
+	glVertex3f(0, y2, x2);
+	glVertex3f(0, y3, x3);
 	glEnd();
 }
 void drawHealth(int x, int y) {
 	glPushMatrix();
-	glScalef(0.0003,0.0003,0.0003);
-	drawCircle(Vector3f(0, y + 14.8, x - 4.9),0, 5.22);
+	glScalef(0.0003, 0.0003, 0.0003);
+	drawCircle(Vector3f(0, y + 14.8, x - 4.9), 0, 5.22);
 	drawCircle(Vector3f(0, y + 14.8, x + 4.9), 0, 5.22);
 	drawTriangle(x, y, x - 9.8, y + 13, x + 9.8, y + 13);
 	glPopMatrix();
@@ -646,8 +650,8 @@ void drawLightPost() {
 	glDisable(GL_LIGHTING);
 	glPushMatrix();
 	glScalef(0.01, 0.01, 0.01);
-	glColor3f(0.2,0.2, flicker);
-	glRotated(-45,0,1,0);
+	glColor3f(0.2, 0.2, flicker);
+	glRotated(-45, 0, 1, 0);
 	model_lightPost.Draw();
 	glPopMatrix();
 	glEnable(GL_LIGHTING);
@@ -707,13 +711,13 @@ void renderLightPosts()
 
 	int centerx = ((int)player.x / 7) * 7;
 	int centerz = ((int)player.z / 7) * 7;
-	vector<Vector3f> illumination ;
+	vector<Vector3f> illumination;
 
 	for (int x = -28 + centerx;x - centerx <= 28;x += 7) {
 		for (int z = -28 + centerz;z - centerz <= 28;z += 7) {
 			if (isLightPost(x, z)) {
 				glPushMatrix();
-				glTranslatef(x-3,0, z-3);
+				glTranslatef(x - 3, 0, z - 3);
 				drawLightPost();
 				glPopMatrix();
 				if (abs(centerx - x) + abs(centerz - z) <= 14) {
@@ -727,8 +731,8 @@ void renderLightPosts()
 	GLfloat lDiffuse[] = { 0.0f, 0.0f, 1.0f, 1.0f };
 	for (int i = 0; i < illumination.size();i++) {
 		if (i == 0) {
-			GLfloat l1internsity[] = { 0.0f,0.0f,0.0f,0.0f};
-			GLfloat l1Position[] = {illumination[i].x,illumination[i].y,illumination[i].z, flicker};
+			GLfloat l1internsity[] = { 0.0f,0.0f,0.0f,0.0f };
+			GLfloat l1Position[] = { illumination[i].x,illumination[i].y,illumination[i].z, flicker };
 			glLightfv(GL_LIGHT1, GL_POSITION, l1Position);
 			glLightfv(GL_LIGHT1, GL_AMBIENT, l1internsity);
 			glLightfv(GL_LIGHT1, GL_DIFFUSE, lDiffuse);
@@ -743,7 +747,7 @@ void renderLightPosts()
 			glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 30.0);
 			glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 90.0);
 			glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, lDirection);
-	    }
+		}
 		else if (i == 2) {
 			GLfloat l3Position[] = { illumination[i].x,illumination[i].y,illumination[i].z, flicker };
 			glLightfv(GL_LIGHT3, GL_POSITION, l3Position);
@@ -752,7 +756,7 @@ void renderLightPosts()
 			glLightf(GL_LIGHT3, GL_SPOT_EXPONENT, 90.0);
 			glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, lDirection);
 		}
-		else if (i ==3) {
+		else if (i == 3) {
 			GLfloat l4Position[] = { illumination[i].x,illumination[i].y,illumination[i].z, flicker };
 			glLightfv(GL_LIGHT4, GL_POSITION, l4Position);
 			glLightfv(GL_LIGHT4, GL_DIFFUSE, lDiffuse);
@@ -785,7 +789,7 @@ void renderLightPosts()
 			glLightfv(GL_LIGHT7, GL_SPOT_DIRECTION, lDirection);
 		}
 
-		
+
 
 	}
 	glDisable(GL_TEXTURE_2D);
@@ -836,9 +840,10 @@ void renderObsticles()
 			if (abs(centerx - x) + abs(centerz - z) > 28)continue;
 			if (isObsticle(x, z)) {
 				glPushMatrix();
-				glTranslatef(x, 0.01, z);
+				glTranslatef(x, -0.5 + 0.01, z);
 				if (isNight) {
 					glRotated(180, 0, 1, 0);
+					glTranslatef(0, 0.5, 0);
 					glScalef(0.01, 0.02, 0.01);
 					model_car.Draw();
 				}
@@ -909,25 +914,19 @@ void renderEnemy() {
 void renderPlayer() {
 	glPushMatrix();
 	glColor3f(0.7, 0.7, 0.7);
-	glTranslated(player.x, player.y+0.55, player.z - 0.02);
+	glTranslated(player.x, player.y + 0.55, player.z - 0.02);
 	glRotatef(-90 + ((movingFront + movingBack + movingRight + movingLeft) ? (movingFront * movingRight * 360 + movingBack * 180 + movingRight * 270 + movingLeft * 90) /
 		(movingFront + movingBack + movingRight + movingLeft) : 0), 0, 1, 0);
 	glRotatef(angleFront + 168, 0, 1, 0);
 	glRotatef(94, 1, 0, 0);
 	//glScalef(0.015, 0.015, 0.015);
 	//model_player.Draw();
-    //glRotatef(100, 1, 0, 1);
+	//glRotatef(100, 1, 0, 1);
 	model_character[playerFrame].Draw();
 
 	glPopMatrix();
 
 }
-
-
-
-
-
-
 void renderScreen() {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_COLOR_MATERIAL);
@@ -935,7 +934,7 @@ void renderScreen() {
 	double dot = (target.x - player.x) * front.x + (target.z - player.z) * front.z;
 	double det = -(target.x - player.x) * front.z + (target.z - player.z) * front.x;
 	double angle = rad2deg(atan2(det, dot));
-	
+
 
 	glPushMatrix();
 	glColor3f(1, 1, 1);
@@ -949,11 +948,11 @@ void renderScreen() {
 	drawCircle(Vector3f(-0.0001, 0.06, 0.12), 0.01, 0.0125);
 
 	glTranslatef(-0.0001, 0.06, 0.12);
-	if(health>0)
+	if (health > 0)
 		drawHealth(0, 5);
-	if(health>1)
+	if (health > 1)
 		drawHealth(-15, -20);
-	if(health>2)
+	if (health > 2)
 		drawHealth(15, -20);
 	glRotated(angle, 1, 0, 0);
 	glTranslatef(0, 0.0115, 0);
@@ -1019,9 +1018,9 @@ void myKeyboard(unsigned char button, int x, int y)
 	switch (button)
 	{
 	case ' ': {
-		if (jump < 100) {
+		if ((jump < 2)&&(!isFalling)) {
 			sndPlaySound(TEXT("sounds/wallCollision.wav"), SND_ASYNC | SND_FILENAME);
-			playerV += Vector3f(0, 0.2, 0);
+			playerV = Vector3f(0, 0.18, 0);
 			jump++;
 		}
 		break;
@@ -1165,7 +1164,7 @@ void tick(int value) {
 	if (target.dis(player) < 2) {
 		restart(true);
 	}
-	if (enemy.dis(player) < 2) {
+	if ((enemy.dis(player) < 2)||(player.y<-30)) {
 		restart(false);
 	}
 	if (!isNight) {
