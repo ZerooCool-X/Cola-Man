@@ -121,6 +121,9 @@ double toFlicker = 50;
 double isCompleted = false;
 bool wonEndGame = false;
 bool isNight = false;
+double loadingPower = 0;
+double playerSpeed = 1;
+double speedCount = 300;
 bool isFalling = false;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
@@ -145,7 +148,7 @@ Vector3f front = Vector3f(1, 1, 0);
 
 Vector3f player = Vector3f(0, 0, 0);
 Vector3f playerV = Vector3f(0, 0, 0);
-Vector3f target = Vector3f(((Hash(rand()) % 3 + 2) * 15 + 5) * 7, 0, ((Hash(rand()) % 3 + 2) * 15 + 6) * 7);
+Vector3f target = Vector3f(((Hash(rand()) % 2 + 1) * 15 + 5) * 7, 0, ((Hash(rand()) % 2 + 1) * 15 + 6) * 7);
 
 Vector3f sun = Vector3f(130, 160, 40);
 Vector3f enemy = Vector3f(0, 0, -35);
@@ -374,12 +377,12 @@ void endGame() {
 void restart(bool youWon) {
 	player = Vector3f(0, 0, 0);
 	playerV = Vector3f(0, 0, 0);
-	target = Vector3f(((Hash(rand()) % 3 + 2) * 15 + 5) * 7, 0, ((Hash(rand()) % 3 + 2) * 15 + 6) * 7);
+	target = Vector3f(((Hash(rand()) % 2 + 1) * 15 + 5) * 7, 0, ((Hash(rand()) % 2 + 1) * 15 + 6) * 7);
 	sun = Vector3f(130, 160, 40);
 	enemy = Vector3f(0, 0, -35);
 	enemyNextTarget = Vector3f(0, -1, 0);
 	isFalling = false;
-    enemySpeed = 0.25;
+	enemySpeed = 0.25;
 	if (youWon) {
 		if (isNight) {
 			sndPlaySound(TEXT("sounds/endGame.wav"), SND_ASYNC | SND_FILENAME);
@@ -394,7 +397,7 @@ void restart(bool youWon) {
 			glDisable(GL_LIGHT0);
 			glDisable(GL_LIGHT1);
 		}
-		
+
 	}
 	else {
 		health--;
@@ -423,7 +426,7 @@ bool isObsticle(int x, int z) {
 	int centerx = (int)round(x / 7.0);
 	int centerz = (int)round(z / 7.0);
 	return obsticleMap[((centerx + centerz) % 5 + 5) % 5][x - centerx * 7 + 3][z - centerz * 7 + 3];
-	
+
 }
 bool isCoin(int x, int z) {
 	return (x % 7 == 0) && (z % 7 == 0) && (x != target.x || z != target.z) && ((Hash(x) + Hash(z)) % 10 == 0) && (find(takenCoins.begin(), takenCoins.end(), (pair<int, int>{x, z})) == takenCoins.end()) && !isBuilding(x, z);
@@ -441,35 +444,42 @@ void isFreeThenMove(Vector3f acc) {
 		if (isBuilding((int)round(player.x + acc.x), (int)round(player.z + acc.z)))
 			acc = acc * Vector3f(1, 1, 0);
 	}
-	if (isObsticle((int)round(player.x + acc.x), (int)round(player.z + acc.z))&&isNight) {
+	if (isObsticle((int)round(player.x + acc.x), (int)round(player.z + acc.z)) && isNight) {
 
-		if (player.y < 1) {
+		if (player.y < 2) {
 			if (isObsticle((int)round(player.x + acc.x), (int)round(player.z))) {
-				sndPlaySound(TEXT("sounds/carCollision.wav"), SND_ASYNC | SND_FILENAME);
+				/*if (isNight) {
+				  PlaySound(TEXT("sounds/carCollision.wav"),NULL, SND_ASYNC | SND_FILENAME);
+
+				}*/
 				acc = acc * Vector3f(0, 1, 1);
 			}
 			if (isObsticle((int)round(player.x + acc.x), (int)round(player.z + acc.z)))
-			   sndPlaySound(TEXT("sounds/carCollision.wav"), SND_ASYNC | SND_FILENAME);
+				/*if (isNight) {
+					PlaySound(TEXT("sounds/carCollision.wav"), NULL,SND_ASYNC | SND_FILENAME);
+				}*/
 				acc = acc * Vector3f(1, 1, 0);
 
 
 		}
 	}
 
-	player += acc;
+	player += acc * (playerSpeed);
 
 	//sun += Vector3f(acc.x-10, 0, acc.z - 10);
-	if (isObsticle((int)round(player.x), (int)round(player.z)) ) {
-		if(isNight && (player.y<1)) {
-			player.y = 1;
+	if (isObsticle((int)round(player.x), (int)round(player.z))) {
+		if (isNight && (player.y < 2.1)) {
+			player.y = 2.1;
 			playerV.y = 0;
 			jump = 0;
 		}
-		else if(player.y<-0.3) {
+		else if ((player.y < -0.3) && (!isFalling)) {
 			isFalling = true;
+			PlaySound(TEXT("sounds/falling.wav"), NULL, SND_FILENAME | SND_ASYNC);
+
 		}
 	}
-	else if (player.y < 0&&(!isFalling)) {
+	else if (player.y < 0 && (!isFalling)) {
 		player.y = 0;
 		playerV.y = 0;
 		jump = 0;
@@ -489,6 +499,10 @@ void isFreeThenMove(Vector3f acc) {
 
 		}
 		score++;
+		if (playerSpeed == 1) {
+			loadingPower++;
+
+		}
 		takenCoins.push_back(pair<int, int>{(int)round(player.x), (int)round(player.z)});
 	}
 
@@ -505,29 +519,29 @@ void isFreeThenMove(Vector3f acc) {
 	}
 }
 void move() {
-       Vector3f acc = Vector3f(0, 0, 0);
-		if (movingFront) {
-			acc += front.unit();
-		} 
-		if (movingBack) {
-			acc += front.unit() * -1;
-		}
-		Vector3f right = up.cross(front);
-		if (movingRight) {
-			acc += right.unit() * -1;
-		}
-		if (movingLeft) {
-			acc += right.unit();
-		}
-		if (acc.x != 0 || acc.y != 0 || acc.z != 0) {
-			acc = acc.unit() / 4;
-		}
-		acc += playerV;
-		playerV += Vector3f(0, -0.01, 0);
+	Vector3f acc = Vector3f(0, 0, 0);
+	if (movingFront) {
+		acc += front.unit();
+	}
+	if (movingBack) {
+		acc += front.unit() * -1;
+	}
+	Vector3f right = up.cross(front);
+	if (movingRight) {
+		acc += right.unit() * -1;
+	}
+	if (movingLeft) {
+		acc += right.unit();
+	}
+	if (acc.x != 0 || acc.y != 0 || acc.z != 0) {
+		acc = acc.unit() / 4;
+	}
+	acc += playerV;
+	playerV += Vector3f(0, -0.01, 0);
 
-		isFreeThenMove(acc);
-	
-	
+	isFreeThenMove(acc);
+
+
 }
 void moveEnemy() {
 	int xp = (int)round(player.x / 7.0) + 1;
@@ -729,7 +743,18 @@ void drawLightPost() {
 
 
 }
-
+void drawCar(double x,double z,bool isRotated) {
+	glPushMatrix();
+	glColor3f(0.7, 0.7, 0.7);
+	glTranslatef(x, 0, z);
+	if (isRotated) {
+		glRotatef(90, 0, 1, 0);
+	}
+	glTranslatef(0, 0, 0.35);
+	glScalef(0.035, 0.035, 0.03);
+	model_car.Draw();
+	glPopMatrix();
+}
 void print(Vector3f pos, string string) {
 	int len, i;
 	glRasterPos3f(pos.x, pos.y, pos.z);
@@ -902,31 +927,46 @@ void renderObsticles()
 	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
 
 	glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
-	int centerx = ((int)round(player.x/7));
-	int centerz = ((int)round(player.z/7));
+	int centerx = ((int)round(player.x / 7));
+	int centerz = ((int)round(player.z / 7));
 
 
 	for (int x = -4 + centerx;x - centerx <= 4;x++) {
 		for (int z = -4 + centerz;z - centerz <= 4;z++) {
-			if (abs(centerx - x) + abs(centerz - z) > 4)continue;
-			for (int i = -3;i <= 3;i++) {
-				for (int j = -3;j <= 3;j++) {
-					if (isObsticle(x*7+i, z*7+j)) {
-						glPushMatrix();
-						glTranslatef(x*7+i, -0.5 + 0.01, z*7+j);
-						if (isNight) {
-							glRotated(180, 0, 1, 0);
-							glTranslatef(0, 0.5, 0);
-							glScalef(0.03, 0.03, 0.03);
-							model_car.Draw();
-						}
-						else {
+			if ((abs(centerx - x) + abs(centerz - z) > 3)||isBuilding(x*7,z*7))continue;
+			if (isNight) {
+				int whichMap = ((x + z) % 5 + 5) % 5;
+				glPushMatrix();
+				glTranslatef(x*7,0,z*7);
+				if (whichMap == 1) {
+					drawCar(0, -1.5, true);
+				}
+				else if (whichMap == 2) {
+					drawCar(1.5, -1, false);
+					drawCar(-2.5, 1, false);
+				}
+				else if (whichMap == 3) {
+					drawCar(-1.5, 0, false);
+				}
+				else if (whichMap == 4) {
+					drawCar(0, -2.5, true);
+					drawCar(-1.5, 1, false);
+				}
+				glPopMatrix();
+
+			}
+			else {
+				for (int i = -3;i <= 3;i++) {
+					for (int j = -3;j <= 3;j++) {
+						if (isObsticle(x * 7 + i, z * 7 + j)) {
+							glPushMatrix();
+							glTranslatef(x * 7 + i, -0.5 + 0.01, z * 7 + j);
 							glColor3f(0, 0, 0);
 							glutSolidCube(1);
-						}
+							glPopMatrix();
 
-						//drawCoin();
-						glPopMatrix();
+
+						}
 					}
 				}
 			}
@@ -1018,6 +1058,35 @@ void renderScreen() {
 	glRotatef(angleFront + (view == 2 ? 180 : 0), 0, 1, 0);
 	glRotatef(-angleUp, 0, 0, 1);
 	print(Vector3f(0, 0.04, 0.119), to_string(score));
+	if (playerSpeed == 1) {
+		if (loadingPower < 8) {
+			//print(Vector3f(0, 0.03, 0.1), "loading powerUp " + to_string((int)(8 - loadingPower)));
+			glPushMatrix();
+			glColor3f(0.04, 0.19, 0.125);
+			glBegin(GL_QUADS);
+			glVertex3f(0, 0.035, 0.1);
+			glVertex3f(0, 0.03, 0.1);
+			glVertex3f(0, 0.03, 0.1 + loadingPower / 200);
+			glVertex3f(0, 0.035, 0.1 + loadingPower / 200);
+			glEnd();
+			glPopMatrix();
+
+		}
+		else {
+			print(Vector3f(0, 0.02, 0.09), "press Q to activate powerUp");
+			glPushMatrix();
+			glColor3f(0.5, flicker, 1.0);
+			glBegin(GL_QUADS);
+			glVertex3f(0, 0.035, 0.1);
+			glVertex3f(0, 0.03, 0.1);
+			glVertex3f(0, 0.03, 0.14);
+			glVertex3f(0, 0.035, 0.14);
+			glEnd();
+			glPopMatrix();
+
+		}
+	}
+	glColor3f(1, 1, 1);
 	drawCircle(Vector3f(0, 0.06, 0.12), 0, 0.015);
 	glColor3f(1, 0, 0);
 	drawCircle(Vector3f(-0.0001, 0.06, 0.12), 0.01, 0.0125);
@@ -1057,9 +1126,9 @@ void renderEndGameScreen(bool won) {
 	glRotatef(angleFront + (view == 2 ? 180 : 0), 0, 1, 0);
 	glRotatef(-angleUp, 0, 0, 1);
 	if (won) {
-    glColor3f(0.1, 0.9, 0.1);
-	print(Vector3f(-0.05,0.025,0), "YOU WON ");
-	print(Vector3f(-0.05, 0.02, 0), "SCORE");
+		glColor3f(0.1, 0.9, 0.1);
+		print(Vector3f(-0.05, 0.025, 0), "YOU WON ");
+		print(Vector3f(-0.05, 0.02, 0), "SCORE");
 
 	}
 	else {
@@ -1067,7 +1136,7 @@ void renderEndGameScreen(bool won) {
 		print(Vector3f(-0.05, 0.025, 0), "YOU LOST");
 		print(Vector3f(-0.05, 0.02, 0), "SCORE");
 	}
-	print(Vector3f(-0.03,0.019, 0.0), to_string(score));
+	print(Vector3f(-0.03, 0.019, 0.0), to_string(score));
 	glPopMatrix();
 	glPopMatrix();
 
@@ -1096,11 +1165,11 @@ void Special(int key, int x, int y) {
 	}
 	else {
 		if (key == '8') {
-	        	exit(0);
+			exit(0);
 
 		}
 	}
-	
+
 
 	glutPostRedisplay();
 }
@@ -1138,6 +1207,12 @@ void myKeyboard(unsigned char button, int x, int y)
 				jump++;
 			}
 			break;
+		}
+		case 'q': {
+			if (loadingPower >= 8) {
+				playerSpeed = 1.5;
+				loadingPower = 0;
+			}
 		}
 		case 'w': {
 			movingFront = true;
@@ -1270,7 +1345,7 @@ void display(void)
 		gluSphere(qobj, 200, 100, 100);
 		gluDeleteQuadric(qobj);
 		glPopMatrix();
-	
+
 
 	}
 	else {
@@ -1287,23 +1362,29 @@ void tick(int value) {
 	}
 	if (!isCompleted) {
 
-	moveEnemy();
+		moveEnemy();
 	}
-
-
+	//power up speed
+	if (playerSpeed == 1.5) {
+		speedCount--;
+		if (speedCount == 0) {
+			speedCount = 300;
+			playerSpeed = 1;
+		}
+	}
 	if (target.dis(player) < 2) {
 		if (!isNight) {
-		sndPlaySound("sounds/bottleDrink.wav", SND_ASYNC | SND_FILENAME);
+			sndPlaySound("sounds/bottleDrink.wav", SND_ASYNC | SND_FILENAME);
 
 		}
 		restart(true);
 	}
-	if ((enemy.dis(player) < 2)||(player.y<-30)) {
+	if ((enemy.dis(player) < 2) || (player.y < -30)) {
 		restart(false);
-		
+
 	}
 	if (enemy.dis(player) < 4) {
-			sndPlaySound(TEXT("sounds/monster.wav"), SND_ASYNC | SND_FILENAME);
+		sndPlaySound(TEXT("sounds/monster.wav"), SND_ASYNC | SND_FILENAME);
 
 	}
 	if (!isNight) {
