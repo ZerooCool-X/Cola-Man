@@ -197,6 +197,53 @@ int map[15][15] = {
 	{0,0,1,0,0,0,0,0,1,0,0,0,0,0,0},
 	{1,1,1,0,1,1,1,0,1,1,1,1,0,1,1}
 };
+int obsticleMap[5][7][7]{
+	{
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0}
+	},
+	{
+		{0,0,0,0,0,0,0},
+		{0,1,1,0,0,0,0},
+		{0,1,1,0,0,0,0},
+		{0,1,1,0,0,0,0},
+		{0,1,1,0,0,0,0},
+		{0,1,1,0,0,0,0},
+		{0,0,0,0,0,0,0}
+	},
+	{
+		{0,0,1,1,1,1,1},
+		{0,0,1,1,1,1,1},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{1,1,1,1,1,0,0},
+		{1,1,1,1,1,0,0},
+		{0,0,0,0,0,0,0}
+	},
+	{
+		{0,0,0,0,0,0,0},
+		{0,1,1,1,1,1,0},
+		{0,1,1,1,1,1,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0}
+	},
+	{
+		{0,0,0,0,0,0,0},
+		{1,1,1,1,1,1,1},
+		{1,1,1,1,1,1,1},
+		{1,1,0,0,0,0,0},
+		{1,1,0,0,0,0,0},
+		{1,1,0,0,0,0,0},
+		{0,0,0,0,0,0,0}
+	}
+};
 int floyd[225][225];
 
 int convert2dTo1d(int x, int y) {
@@ -372,14 +419,11 @@ bool isBuilding(int x, int z) {
 	return false;
 }
 bool isObsticle(int x, int z) {
-	if (x == 0 && z == 0 || isBuilding(x, z) || ((x % 7 == 0) && (z % 7 == 0)))return false;
-	if ((Hash(x) + Hash(z)) % 100) {
-		return false;
-	}
-	else {
-		if (isObsticle(x + 1, z))return false;
-		return true;
-	}
+	if (isBuilding(x, z))return false;
+	int centerx = (int)round(x / 7.0);
+	int centerz = (int)round(z / 7.0);
+	return obsticleMap[((centerx + centerz) % 5 + 5) % 5][x - centerx * 7 + 3][z - centerz * 7 + 3];
+	
 }
 bool isCoin(int x, int z) {
 	return (x % 7 == 0) && (z % 7 == 0) && (x != target.x || z != target.z) && ((Hash(x) + Hash(z)) % 10 == 0) && (find(takenCoins.begin(), takenCoins.end(), (pair<int, int>{x, z})) == takenCoins.end()) && !isBuilding(x, z);
@@ -421,7 +465,7 @@ void isFreeThenMove(Vector3f acc) {
 			playerV.y = 0;
 			jump = 0;
 		}
-		else if(player.y<0.1) {
+		else if(player.y<-0.3) {
 			isFalling = true;
 		}
 	}
@@ -479,7 +523,7 @@ void move() {
 			acc = acc.unit() / 4;
 		}
 		acc += playerV;
-		playerV += Vector3f(0, -0.0098, 0);
+		playerV += Vector3f(0, -0.01, 0);
 
 		isFreeThenMove(acc);
 	
@@ -858,29 +902,33 @@ void renderObsticles()
 	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
 
 	glBindTexture(GL_TEXTURE_2D, tex_ground.texture[0]);	// Bind the ground texture
-	int centerx = ((int)player.x);
-	int centerz = ((int)player.z);
+	int centerx = ((int)round(player.x/7));
+	int centerz = ((int)round(player.z/7));
 
 
-	for (int x = -30 + centerx;x - centerx <= 30;x++) {
-		for (int z = -30 + centerz;z - centerz <= 30;z++) {
-			if (abs(centerx - x) + abs(centerz - z) > 28)continue;
-			if (isObsticle(x, z)) {
-				glPushMatrix();
-				glTranslatef(x, -0.5 + 0.01, z);
-				if (isNight) {
-					glRotated(180, 0, 1, 0);
-					glTranslatef(0, 0.5, 0);
-					glScalef(0.01, 0.02, 0.01);
-					model_car.Draw();
+	for (int x = -4 + centerx;x - centerx <= 4;x++) {
+		for (int z = -4 + centerz;z - centerz <= 4;z++) {
+			if (abs(centerx - x) + abs(centerz - z) > 4)continue;
+			for (int i = -3;i <= 3;i++) {
+				for (int j = -3;j <= 3;j++) {
+					if (isObsticle(x*7+i, z*7+j)) {
+						glPushMatrix();
+						glTranslatef(x*7+i, -0.5 + 0.01, z*7+j);
+						if (isNight) {
+							glRotated(180, 0, 1, 0);
+							glTranslatef(0, 0.5, 0);
+							glScalef(0.03, 0.03, 0.03);
+							model_car.Draw();
+						}
+						else {
+							glColor3f(0, 0, 0);
+							glutSolidCube(1);
+						}
+
+						//drawCoin();
+						glPopMatrix();
+					}
 				}
-				else {
-					glColor3f(0, 0, 0);
-					glutSolidCube(1);
-				}
-
-				//drawCoin();
-				glPopMatrix();
 			}
 		}
 	}
