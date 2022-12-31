@@ -362,7 +362,58 @@ void restart(bool youWon) {
 		endGame();
 	}
 }
+void startGame() {
+	 score = 0;
+	 movingFront = FALSE;
+	 movingBack = FALSE;
+	 movingRight = FALSE;
+	 movingLeft = FALSE;
 
+	 cameraUp = FALSE;
+	 cameraDown = FALSE;
+	 cameraRight = FALSE;
+	 cameraLeft = FALSE;
+	 jump = 0;
+	 view = 3;
+	 health = 3;
+	 playerFrame = 5;
+	 frameDirection = 1;
+	 playerDirection = 0;
+	 mouseX = 0;
+	 mouseY = 0;
+	 sunDim = 0;
+	 skyDim = 0;
+	 light1 = 0;
+	 flicker = 1;
+	 toFlicker = 50;
+	 isCompleted = false;
+	 wonEndGame = false;
+	 isNight = false;
+	 loadingPower = 0;
+	 playerSpeed = 1;
+	 speedCount = 300;
+	 isFalling = false;
+	// 3D Projection Options
+	 fovy = 45.0;
+	 aspectRatio = (GLdouble)WIDTH / (GLdouble)HEIGHT;
+	 zNear = 0.1;
+	 zFar = 250;
+	 angleFront = 0;
+	 angleUp = 0;
+     angleCoin = 0;
+	 angleSun = 0.04;
+	 eye = Vector3f(0, 0.9, 0);
+	 center = Vector3f(-1, 0.9, 0);
+	 up = Vector3f(0, 1, 0);
+	 front = Vector3f(1, 1, 0);
+	 player = Vector3f(0, 0, 0);
+	 playerV = Vector3f(0, 0, 0);
+     target = Vector3f(((Hash(rand()) % 3 + 2) * 15 + 5) * 7, 0, ((Hash(rand()) % 3 + 2) * 15 + 6) * 7);
+	 sun = Vector3f(130, 160, 40);
+     enemy = Vector3f(0, 0, -35);
+	 enemyNextTarget = Vector3f(0, -1, 0);
+	 enemySpeed = 0.25;
+}
 
 
 bool isBuilding(int x, int z) {
@@ -1168,7 +1219,7 @@ void myKeyboard(unsigned char button, int x, int y)
 			view = 3;
 			break;
 
-		case '9':
+		case 27:
 			exit(0);
 			break;
 		default:
@@ -1176,9 +1227,12 @@ void myKeyboard(unsigned char button, int x, int y)
 		}
 	}
 	else {
-		if (button == '8') {
+		if (button == 27) {
 			exit(0);
 
+		}
+		if (button == 'r') {
+			startGame();
 		}
 	}
 
