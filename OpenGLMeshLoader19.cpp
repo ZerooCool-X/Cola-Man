@@ -310,8 +310,6 @@ void InitLightSource()
 		GLfloat l0Direction[] = { (center - eye).x, (center - eye).y,(center - eye).z };
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, l0Diffuse);
 		glLightfv(GL_LIGHT0, GL_POSITION, l0Position);
-		glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 30.0);
-		glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 90.0);
 		glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, l0Direction);
 
 
@@ -319,18 +317,26 @@ void InitLightSource()
 	else {
 		//camera lights
 		glEnable(GL_LIGHT0);
+		glEnable(GL_LIGHT1);
+		glDisable(GL_LIGHT2);
+		glDisable(GL_LIGHT3);
+		glDisable(GL_LIGHT4);
+		glDisable(GL_LIGHT5);
+		glDisable(GL_LIGHT6);
+		glDisable(GL_LIGHT7);
 		GLfloat light0Intensity[] = { 1.0 + light1, 1.0 + light1 ,1.0 + light1, 1.0f };
 		GLfloat light0_Position[] = { 0.0f,0.0f, 0.0f, 0.0f };
 
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, light0Intensity);
 		glLightfv(GL_LIGHT0, GL_POSITION, light0_Position);
 
+
 		//sun lights
-		glEnable(GL_LIGHT1);
 		GLfloat light1Intensity[] = { 1.0 , 1.0 + sunDim ,0.93 + sunDim, 1.0f };
 		GLfloat light1_position[] = { sun.x, sun.y, sun.z,0 };
 		glLightfv(GL_LIGHT1, GL_AMBIENT, light1Intensity);
 		glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
+
 	}
 
 	glDisable(GL_LIGHTING);
@@ -375,6 +381,8 @@ void endGame() {
 	view = 3;
 }
 void restart(bool youWon) {
+
+
 	player = Vector3f(0, 0, 0);
 	playerV = Vector3f(0, 0, 0);
 	target = Vector3f(((Hash(rand()) % 2 + 1) * 15 + 5) * 7, 0, ((Hash(rand()) % 2 + 1) * 15 + 6) * 7);
@@ -394,8 +402,6 @@ void restart(bool youWon) {
 			sunDim = 0;
 			skyDim = 0;
 			light1 = 0;
-			glDisable(GL_LIGHT0);
-			glDisable(GL_LIGHT1);
 		}
 
 	}
@@ -1112,7 +1118,7 @@ void renderScreen() {
 		if (loadingPower < 4) {
 			//print(Vector3f(0, 0.03, 0.1), "loading powerUp " + to_string((int)(8 - loadingPower)));
 			glPushMatrix();
-			glColor3f(0.04, 0.19, 0.125);
+			glColor3f(0.24, 0.7, 0.225);
 			glBegin(GL_QUADS);
 			glVertex3f(0, 0.035, 0.1);
 			glVertex3f(0, 0.03, 0.1);
