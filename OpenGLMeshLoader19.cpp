@@ -120,7 +120,7 @@ double flicker = 1;
 double toFlicker = 50;
 double isCompleted = false;
 bool wonEndGame = false;
-bool isNight = true;
+bool isNight = false;
 double loadingPower = 0;
 double playerSpeed = 1;
 double speedCount = 300;
@@ -1109,15 +1109,15 @@ void renderScreen() {
 	glRotatef(-angleUp, 0, 0, 1);
 	print(Vector3f(0, 0.04, 0.119), to_string(score));
 	if (playerSpeed == 1) {
-		if (loadingPower < 8) {
+		if (loadingPower < 4) {
 			//print(Vector3f(0, 0.03, 0.1), "loading powerUp " + to_string((int)(8 - loadingPower)));
 			glPushMatrix();
 			glColor3f(0.04, 0.19, 0.125);
 			glBegin(GL_QUADS);
 			glVertex3f(0, 0.035, 0.1);
 			glVertex3f(0, 0.03, 0.1);
-			glVertex3f(0, 0.03, 0.1 + loadingPower / 200);
-			glVertex3f(0, 0.035, 0.1 + loadingPower / 200);
+			glVertex3f(0, 0.03, 0.1 + loadingPower / 100);
+			glVertex3f(0, 0.035, 0.1 + loadingPower / 100);
 			glEnd();
 			glPopMatrix();
 
@@ -1258,7 +1258,7 @@ void myKeyboard(unsigned char button, int x, int y)
 			break;
 		}
 		case 'q': {
-			if (loadingPower >= 8) {
+			if (loadingPower >= 4) {
 				playerSpeed = 1.5;
 				loadingPower = 0;
 			}
@@ -1401,7 +1401,7 @@ void display(void)
 
 	}
 	else {
-		//renderEndGameScreen(wonEndGame);
+		renderEndGameScreen(wonEndGame);
 	}
 	glutSwapBuffers();
 }
