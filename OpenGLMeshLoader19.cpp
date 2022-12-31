@@ -120,7 +120,7 @@ double flicker = 1;
 double toFlicker = 50;
 double isCompleted = false;
 bool wonEndGame = false;
-bool isNight = false;
+bool isNight = true;
 double loadingPower = 0;
 double playerSpeed = 1;
 double speedCount = 300;
@@ -415,7 +415,6 @@ void startGame() {
 	 movingBack = FALSE;
 	 movingRight = FALSE;
 	 movingLeft = FALSE;
-
 	 cameraUp = FALSE;
 	 cameraDown = FALSE;
 	 cameraRight = FALSE;
@@ -1190,7 +1189,6 @@ void renderEndGameScreen(bool won) {
 	print(Vector3f(-0.03, 0.019, 0.0), to_string(score));
 	glPopMatrix();
 	glPopMatrix();
-
 }
 
 
@@ -1403,7 +1401,7 @@ void display(void)
 
 	}
 	else {
-		renderEndGameScreen(wonEndGame);
+		//renderEndGameScreen(wonEndGame);
 	}
 	glutSwapBuffers();
 }
