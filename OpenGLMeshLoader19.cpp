@@ -106,8 +106,11 @@ bool cameraDown = FALSE;
 bool cameraRight = FALSE;
 bool cameraLeft = FALSE;
 int jump = 0;
-int view = 1;
+int view = 3;
 int health = 3;
+int playerFrame = 5;
+int frameDirection = 1;
+int playerDirection = 0;
 double mouseX = 0;
 double mouseY = 0;
 double sunDim = 0;
@@ -176,7 +179,6 @@ GLTexture tex_ground;
 
 int dx[4] = { -1,1,0,0 };
 int dy[4] = { 0,0,-1,1 };
-
 
 int map[15][15] = {
 	{1,1,1,0,1,1,1,0,1,1,1,1,0,1,1},
@@ -415,6 +417,18 @@ void isFreeThenMove(Vector3f acc) {
 		}
 		score++;
 		takenCoins.push_back(pair<int, int>{(int)round(player.x), (int)round(player.z)});
+	}
+
+	if (acc.x == 0 && acc.z == 0) {
+		playerFrame = 5;
+		frameDirection = 1;
+	}
+	else {
+		playerFrame += frameDirection;
+		if (playerFrame == 0 || playerFrame == model_character.size() - 1)
+		{
+			frameDirection *= -1;
+		}
 	}
 }
 void move() {
@@ -892,12 +906,16 @@ void renderEnemy() {
 }
 void renderPlayer() {
 	glPushMatrix();
-	glTranslated(player.x, player.y, player.z - 0.02);
-	glRotatef(angleFront + 90, 0, 1, 0);
-	glScalef(0.015, 0.015, 0.015);
-	model_player.Draw();
+	glColor3f(0.7, 0.7, 0.7);
+	glTranslated(player.x, player.y+0.55, player.z - 0.02);
+	glRotatef(-90 + ((movingFront + movingBack + movingRight + movingLeft) ? (movingFront * movingRight * 360 + movingBack * 180 + movingRight * 270 + movingLeft * 90) /
+		(movingFront + movingBack + movingRight + movingLeft) : 0), 0, 1, 0);
+	glRotatef(angleFront + 168, 0, 1, 0);
+	glRotatef(94, 1, 0, 0);
+	//glScalef(0.015, 0.015, 0.015);
+	//model_player.Draw();
     //glRotatef(100, 1, 0, 1);
-	//model_character[5].Draw();
+	model_character[playerFrame].Draw();
 
 	glPopMatrix();
 
@@ -1256,7 +1274,7 @@ void LoadAssets()
 	tex_moon.Load("Textures/moon.bmp");
 	tex_road.Load("Textures/esfalt.bmp");
 	//player
-	/*Model_3DS c_6;
+	Model_3DS c_6;
 	c_6.Load("Models/spartan/-6.3DS");
 	Model_3DS c_5;
 	c_5.Load("Models/spartan/-5.3DS");
@@ -1287,7 +1305,7 @@ void LoadAssets()
 	model_character.push_back(c1);
 	model_character.push_back(c2);
 	model_character.push_back(c3);
-	model_character.push_back(c4);*/
+	model_character.push_back(c4);
 	loadBMP(&tex_eye, "Models/enemy/eye.bmp", true);
 	loadBMP(&tex_sky, "Textures/blu-sky-3.bmp", true);
 	loadBMP(&tex_sky_night, "Textures/night.bmp", true);
