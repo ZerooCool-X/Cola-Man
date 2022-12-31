@@ -121,6 +121,9 @@ double toFlicker = 50;
 double isCompleted = false;
 bool wonEndGame = false;
 bool isNight = false;
+double loadingPower = 0;
+double playerSpeed = 1;
+double speedCount = 300;
 bool isFalling = false;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
@@ -401,18 +404,23 @@ void isFreeThenMove(Vector3f acc) {
 
 		if (player.y < 1) {
 			if (isObsticle((int)round(player.x + acc.x), (int)round(player.z))) {
-				sndPlaySound(TEXT("sounds/carCollision.wav"), SND_ASYNC | SND_FILENAME);
+				/*if (isNight) {
+				  PlaySound(TEXT("sounds/carCollision.wav"),NULL, SND_ASYNC | SND_FILENAME);
+
+				}*/
 				acc = acc * Vector3f(0, 1, 1);
 			}
 			if (isObsticle((int)round(player.x + acc.x), (int)round(player.z + acc.z)))
-			   sndPlaySound(TEXT("sounds/carCollision.wav"), SND_ASYNC | SND_FILENAME);
+				/*if (isNight) {
+			        PlaySound(TEXT("sounds/carCollision.wav"), NULL,SND_ASYNC | SND_FILENAME);
+				}*/
 				acc = acc * Vector3f(1, 1, 0);
 
 
 		}
 	}
 
-	player += acc;
+	player += acc*(playerSpeed);
 
 	//sun += Vector3f(acc.x-10, 0, acc.z - 10);
 	if (isObsticle((int)round(player.x), (int)round(player.z)) ) {
@@ -421,8 +429,10 @@ void isFreeThenMove(Vector3f acc) {
 			playerV.y = 0;
 			jump = 0;
 		}
-		else if(player.y<0.1) {
+		else if((player.y<0.1)&&(!isFalling)) {
 			isFalling = true;
+			PlaySound(TEXT("sounds/falling.wav"), NULL,  SND_FILENAME| SND_ASYNC);
+
 		}
 	}
 	else if (player.y < 0&&(!isFalling)) {
@@ -445,6 +455,10 @@ void isFreeThenMove(Vector3f acc) {
 
 		}
 		score++;
+		if (playerSpeed == 1) {
+		  loadingPower++;
+
+		}
 		takenCoins.push_back(pair<int, int>{(int)round(player.x), (int)round(player.z)});
 	}
 
@@ -970,6 +984,16 @@ void renderScreen() {
 	glRotatef(angleFront + (view == 2 ? 180 : 0), 0, 1, 0);
 	glRotatef(-angleUp, 0, 0, 1);
 	print(Vector3f(0, 0.04, 0.119), to_string(score));
+	if (playerSpeed == 1) {
+		if (loadingPower<8) {
+			print(Vector3f(0, 0.03, 0.1), "loading powerUp " + to_string((int)(8 - loadingPower)));
+
+		}
+		else {
+			print(Vector3f(0, 0.03, 0.09), "press Q to activate powerUp");
+
+		}
+	}
 	drawCircle(Vector3f(0, 0.06, 0.12), 0, 0.015);
 	glColor3f(1, 0, 0);
 	drawCircle(Vector3f(-0.0001, 0.06, 0.12), 0.01, 0.0125);
@@ -1090,6 +1114,12 @@ void myKeyboard(unsigned char button, int x, int y)
 				jump++;
 			}
 			break;
+		}
+		case 'q': {
+			if (loadingPower >= 8) {
+				playerSpeed = 1.5;
+				loadingPower = 0;
+			}
 		}
 		case 'w': {
 			movingFront = true;
@@ -1241,8 +1271,14 @@ void tick(int value) {
 
 	moveEnemy();
 	}
-
-
+	//power up speed
+	if (playerSpeed == 1.5) {
+		speedCount--;
+		if (speedCount == 0) {
+			speedCount = 300;
+			playerSpeed = 1;
+		}
+	}
 	if (target.dis(player) < 2) {
 		if (!isNight) {
 		sndPlaySound("sounds/bottleDrink.wav", SND_ASYNC | SND_FILENAME);
