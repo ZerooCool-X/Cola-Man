@@ -126,7 +126,7 @@ double playerSpeed = 1;
 double speedCount = 300;
 bool isFalling = false;
 deque <pair<int, int>>takenCoins;
-char title[] = "3D Model Loader Sample";
+char title[] = "Cola Man";
 
 // 3D Projection Options
 GLdouble fovy = 45.0;
