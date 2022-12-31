@@ -115,7 +115,7 @@ double skyDim = 0;
 double light1 = 0;
 double flicker = 1;
 double toFlicker = 50;
-bool isNight = true;
+bool isNight = false;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
 
@@ -236,97 +236,49 @@ void InitLightSource()
 {
 	// Enable Lighting for this OpenGL Program
 	glEnable(GL_LIGHTING);
+
 	GLfloat lmodel_ambient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
 
 	if (isNight) {
 		//camera lights
-		glDisable(GL_LIGHT0);
-		glDisable(GL_LIGHT1);
 		glEnable(GL_LIGHT0);
+		glEnable(GL_LIGHT1);
+		glEnable(GL_LIGHT2);
+		glEnable(GL_LIGHT3);
+		glEnable(GL_LIGHT4);
+		glEnable(GL_LIGHT5);
+		glEnable(GL_LIGHT6);
+		glEnable(GL_LIGHT7);
 		bool s = true;
 		GLfloat l0Diffuse[] = { 0.7f, 0.7f, 0.7f, 1.0f };
 		GLfloat l0Spec[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 		GLfloat l0Ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		GLfloat l0Position[] = { eye.x, eye.y, eye.z, s};
-		GLfloat l0Direction[] = {front.x, front.y,front.z };
+		GLfloat l0Position[] = { eye.x, eye.y, eye.z, s };
+		GLfloat l0Direction[] = { front.x, front.y,front.z };
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, l0Diffuse);
 		glLightfv(GL_LIGHT0, GL_POSITION, l0Position);
 		glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 30.0);
 		glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 90.0);
 		glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, l0Direction);
 
-	
-
-		glEnable(GL_LIGHT3);
-		GLfloat l3Diffuse[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-		GLfloat l3Position[] = { 5, 20, -3, flicker };
-		GLfloat l3Direction[] = { 0, -1,0 };
-		glLightfv(GL_LIGHT3, GL_POSITION, l3Position);
-		glLightfv(GL_LIGHT3, GL_DIFFUSE, l3Diffuse);
-		glLightf(GL_LIGHT3, GL_SPOT_CUTOFF, 30.0);
-		glLightf(GL_LIGHT3, GL_SPOT_EXPONENT, 90.0);
-		glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, l3Direction);
-
-		glEnable(GL_LIGHT2);
-		GLfloat l2Position[] = { -5, 20, -24, flicker };
-		glLightfv(GL_LIGHT2, GL_POSITION, l2Position);
-		glLightfv(GL_LIGHT2, GL_DIFFUSE, l3Diffuse);
-		glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 30.0);
-		glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 90.0);
-		glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, l3Direction);
-
-		glEnable(GL_LIGHT4);
-		GLfloat l4Position[] = { 13, 20, -3, flicker };
-		glLightfv(GL_LIGHT4, GL_POSITION, l4Position);
-		glLightfv(GL_LIGHT4, GL_DIFFUSE, l3Diffuse);
-		glLightf(GL_LIGHT4, GL_SPOT_CUTOFF, 30.0);
-		glLightf(GL_LIGHT4, GL_SPOT_EXPONENT, 90.0);
-		glLightfv(GL_LIGHT4, GL_SPOT_DIRECTION, l3Direction);
-
-		glEnable(GL_LIGHT5);
-		GLfloat l5Position[] = { 20, 20, -3, flicker };
-		glLightfv(GL_LIGHT5, GL_POSITION, l5Position);
-		glLightfv(GL_LIGHT5, GL_DIFFUSE, l3Diffuse);
-		glLightf(GL_LIGHT5, GL_SPOT_CUTOFF, 30.0);
-		glLightf(GL_LIGHT5, GL_SPOT_EXPONENT, 90.0);
-		glLightfv(GL_LIGHT5, GL_SPOT_DIRECTION, l3Direction);
-
-	
-
-		glEnable(GL_LIGHT6);
-		GLfloat l6Position[] = {-5 , 20, -10, flicker };
-		glLightfv(GL_LIGHT6, GL_POSITION, l6Position);
-		glLightfv(GL_LIGHT6, GL_DIFFUSE, l3Diffuse);
-		glLightf(GL_LIGHT6, GL_SPOT_CUTOFF, 30.0);
-		glLightf(GL_LIGHT6, GL_SPOT_EXPONENT, 90.0);
-		glLightfv(GL_LIGHT6, GL_SPOT_DIRECTION, l3Direction);
-
-		glEnable(GL_LIGHT7);
-		GLfloat l7Position[] = { -5, 20, -17, flicker };
-		glLightfv(GL_LIGHT7, GL_POSITION, l7Position);
-		glLightfv(GL_LIGHT7, GL_DIFFUSE, l3Diffuse);
-		glLightf(GL_LIGHT7, GL_SPOT_CUTOFF, 30.0);
-		glLightf(GL_LIGHT7, GL_SPOT_EXPONENT, 90.0);
-		glLightfv(GL_LIGHT7, GL_SPOT_DIRECTION, l3Direction);
-
 
 	}
 	else {
 		//camera lights
-		glEnable(GL_LIGHT1);
-		GLfloat light1Intensity[] = {1.0 + light1, 1.0 + light1 ,1.0 + light1, 1.0f};
-		GLfloat light1_Position[] = { 0.0f,0.0f, 0.0f, 0.0f };
+		glEnable(GL_LIGHT0);
+		GLfloat light0Intensity[] = {1.0 + light1, 1.0 + light1 ,1.0 + light1, 1.0f};
+		GLfloat light0_Position[] = { 0.0f,0.0f, 0.0f, 0.0f };
 
-		glLightfv(GL_LIGHT1, GL_DIFFUSE, light1Intensity);
-		glLightfv(GL_LIGHT1, GL_POSITION, light1_Position);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, light0Intensity);
+		glLightfv(GL_LIGHT0, GL_POSITION, light0_Position);
 
 		//sun lights
-		glEnable(GL_LIGHT0);
-		GLfloat light0Intensity[] = { 1.0 , 1.0 + sunDim ,0.93 + sunDim, 1.0f };
-		GLfloat light0_position[] = { sun.x, sun.y, sun.z,0 };
-		glLightfv(GL_LIGHT0, GL_AMBIENT, light0Intensity);
-		glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+		glEnable(GL_LIGHT1);
+		GLfloat light1Intensity[] = { 1.0 , 1.0 + sunDim ,0.93 + sunDim, 1.0f };
+		GLfloat light1_position[] = { sun.x, sun.y, sun.z,0 };
+		glLightfv(GL_LIGHT1, GL_AMBIENT, light1Intensity);
+		glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
 	}
 
 	glDisable(GL_LIGHTING);
@@ -367,8 +319,6 @@ void myInit(void)
 	gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, up.x, up.y, up.z);
 }
 void restart(bool youWon) {
-	glDisable(GL_LIGHT0);
-	glDisable(GL_LIGHT1);
 	player = Vector3f(0, 0, 0);
 	playerV = Vector3f(0, 0, 0);
 	target = Vector3f(((Hash(rand()) % 3 + 2) * 15 + 5) * 7, 0, ((Hash(rand()) % 3 + 2) * 15 + 6) * 7);
@@ -378,6 +328,11 @@ void restart(bool youWon) {
 	double enemySpeed = 0.25;
 	if (youWon) {
 		isNight = true;
+		sunDim = 0;
+		skyDim = 0;
+		light1 = 0;
+		glDisable(GL_LIGHT0);
+		glDisable(GL_LIGHT1);
 	}
 	else {
 		health--;
@@ -736,7 +691,7 @@ void renderLightPosts()
 
 	int centerx = ((int)player.x / 7) * 7;
 	int centerz = ((int)player.z / 7) * 7;
-
+	vector<Vector3f> illumination ;
 
 	for (int x = -28 + centerx;x - centerx <= 28;x += 7) {
 		for (int z = -28 + centerz;z - centerz <= 28;z += 7) {
@@ -745,9 +700,77 @@ void renderLightPosts()
 				glTranslatef(x-3,0, z-3);
 				drawLightPost();
 				glPopMatrix();
+				if (abs(centerx - x) + abs(centerz - z) <= 14) {
+					illumination.push_back(Vector3f(x - 3, 20, z - 3));
+				}
 
 			}
 		}
+	}
+	GLfloat lDirection[] = { 0, -1,0 };
+	GLfloat lDiffuse[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+	for (int i = 0; i < illumination.size();i++) {
+		if (i == 0) {
+			GLfloat l1internsity[] = { 0.0f,0.0f,0.0f,0.0f};
+			GLfloat l1Position[] = {illumination[i].x,illumination[i].y,illumination[i].z, flicker};
+			glLightfv(GL_LIGHT1, GL_POSITION, l1Position);
+			glLightfv(GL_LIGHT1, GL_AMBIENT, l1internsity);
+			glLightfv(GL_LIGHT1, GL_DIFFUSE, lDiffuse);
+			glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 30.0);
+			glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 90.0);
+			glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, lDirection);
+		}
+		else if (i == 1) {
+			GLfloat l2Position[] = { illumination[i].x,illumination[i].y,illumination[i].z, flicker };
+			glLightfv(GL_LIGHT2, GL_POSITION, l2Position);
+			glLightfv(GL_LIGHT2, GL_DIFFUSE, lDiffuse);
+			glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 30.0);
+			glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 90.0);
+			glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, lDirection);
+	    }
+		else if (i == 2) {
+			GLfloat l3Position[] = { illumination[i].x,illumination[i].y,illumination[i].z, flicker };
+			glLightfv(GL_LIGHT3, GL_POSITION, l3Position);
+			glLightfv(GL_LIGHT3, GL_DIFFUSE, lDiffuse);
+			glLightf(GL_LIGHT3, GL_SPOT_CUTOFF, 30.0);
+			glLightf(GL_LIGHT3, GL_SPOT_EXPONENT, 90.0);
+			glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, lDirection);
+		}
+		else if (i ==3) {
+			GLfloat l4Position[] = { illumination[i].x,illumination[i].y,illumination[i].z, flicker };
+			glLightfv(GL_LIGHT4, GL_POSITION, l4Position);
+			glLightfv(GL_LIGHT4, GL_DIFFUSE, lDiffuse);
+			glLightf(GL_LIGHT4, GL_SPOT_CUTOFF, 30.0);
+			glLightf(GL_LIGHT4, GL_SPOT_EXPONENT, 90.0);
+			glLightfv(GL_LIGHT4, GL_SPOT_DIRECTION, lDirection);
+		}
+		else if (i == 4) {
+			GLfloat l5Position[] = { illumination[i].x,illumination[i].y,illumination[i].z, flicker };
+			glLightfv(GL_LIGHT5, GL_POSITION, l5Position);
+			glLightfv(GL_LIGHT5, GL_DIFFUSE, lDiffuse);
+			glLightf(GL_LIGHT5, GL_SPOT_CUTOFF, 30.0);
+			glLightf(GL_LIGHT5, GL_SPOT_EXPONENT, 90.0);
+			glLightfv(GL_LIGHT5, GL_SPOT_DIRECTION, lDirection);
+		}
+		else if (i == 5) {
+			GLfloat l6Position[] = { illumination[i].x,illumination[i].y,illumination[i].z, flicker };
+			glLightfv(GL_LIGHT6, GL_POSITION, l6Position);
+			glLightfv(GL_LIGHT6, GL_DIFFUSE, lDiffuse);
+			glLightf(GL_LIGHT6, GL_SPOT_CUTOFF, 30.0);
+			glLightf(GL_LIGHT6, GL_SPOT_EXPONENT, 90.0);
+			glLightfv(GL_LIGHT6, GL_SPOT_DIRECTION, lDirection);
+		}
+		else if (i == 6) {
+			GLfloat l7Position[] = { illumination[i].x,illumination[i].y,illumination[i].z, flicker };
+			glLightfv(GL_LIGHT7, GL_POSITION, l7Position);
+			glLightfv(GL_LIGHT7, GL_DIFFUSE, lDiffuse);
+			glLightf(GL_LIGHT7, GL_SPOT_CUTOFF, 30.0);
+			glLightf(GL_LIGHT7, GL_SPOT_EXPONENT, 90.0);
+			glLightfv(GL_LIGHT7, GL_SPOT_DIRECTION, lDirection);
+		}
+
+		
+
 	}
 	glDisable(GL_TEXTURE_2D);
 }
@@ -1117,7 +1140,7 @@ void tick(int value) {
 		flicker = !flicker;
 	}
 
-	//moveEnemy();
+	moveEnemy();
 
 	if (target.dis(player) < 2) {
 		restart(true);
@@ -1294,11 +1317,8 @@ void main(int argc, char** argv)
 
 	glutReshapeFunc(myReshape);
 	sndPlaySound(TEXT("sounds/monster.wav"), SND_ASYNC | SND_FILENAME);
-
 	myInit();
-
 	glutTimerFunc(10, tick, 0);
-
 	LoadAssets();
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_NORMALIZE);
