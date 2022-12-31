@@ -400,11 +400,11 @@ void isFreeThenMove(Vector3f acc) {
 	if (isObsticle((int)round(player.x + acc.x), (int)round(player.z + acc.z))) {
 		if (player.y < 1) {
 			if (isObsticle((int)round(player.x + acc.x), (int)round(player.z))) {
-				//sndPlaySound(TEXT("sounds/carCollision.wav"), SND_ASYNC | SND_FILENAME);
+				sndPlaySound(TEXT("sounds/carCollision.wav"), SND_ASYNC | SND_FILENAME);
 				acc = acc * Vector3f(0, 1, 1);
 			}
 			if (isObsticle((int)round(player.x + acc.x), (int)round(player.z + acc.z)))
-			   //sndPlaySound(TEXT("sounds/carCollision.wav"), SND_ASYNC | SND_FILENAME);
+			   sndPlaySound(TEXT("sounds/carCollision.wav"), SND_ASYNC | SND_FILENAME);
 				acc = acc * Vector3f(1, 1, 0);
 
 
@@ -667,17 +667,6 @@ void drawHealth(int x, int y) {
 	drawTriangle(x, y, x - 9.8, y + 13, x + 9.8, y + 13);
 	glPopMatrix();
 }
-
-void print(Vector3f pos, string string) {
-	int len, i;
-	glRasterPos3f(pos.x, pos.y, pos.z);
-	len = string.size();
-	for (i = 0; i < len; i++)
-	{
-		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, string[i]);
-	}
-}
-
 void drawLightPost() {
 	glDisable(GL_LIGHTING);
 	glPushMatrix();
@@ -688,6 +677,16 @@ void drawLightPost() {
 	glEnable(GL_LIGHTING);
 
 
+}
+
+void print(Vector3f pos, string string) {
+	int len, i;
+	glRasterPos3f(pos.x, pos.y, pos.z);
+	len = string.size();
+	for (i = 0; i < len; i++)
+	{
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, string[i]);
+	}
 }
 
 void renderTarget() {
@@ -989,9 +988,11 @@ void renderScreen() {
 void renderEndGameScreen(bool won) {
 	glPushMatrix();
 	glPushMatrix();
+	glColor3f(0.7, 0.7, 0.7);
 	glRotatef(angleCoin, 0, 1, 0);
-	glScalef(0.015, 0.015, 0.015);
-	model_player.Draw();
+	glTranslatef(0, 0.5, 0);
+	glRotatef(94, 1, 0, 0);
+	model_character[5].Draw();
 	glPopMatrix();
 	glPushMatrix();
 	glColor3f(1, 1, 1);
@@ -1000,13 +1001,17 @@ void renderEndGameScreen(bool won) {
 	glRotatef(angleFront + (view == 2 ? 180 : 0), 0, 1, 0);
 	glRotatef(-angleUp, 0, 0, 1);
 	if (won) {
+    glColor3f(0.1, 0.9, 0.1);
+	print(Vector3f(-0.05,0.025,0), "YOU WON ");
+	print(Vector3f(-0.05, 0.02, 0), "SCORE");
 
-	print(Vector3f(-0.01,0.015,0), "YOU WON SCORE :");
 	}
 	else {
-		print(Vector3f(-0.01, 0.015, 0), "YOU LOST SCORE :");
+		glColor3f(0.9, 0.1, 0.1);
+		print(Vector3f(-0.05, 0.025, 0), "YOU LOST");
+		print(Vector3f(-0.05, 0.02, 0), "SCORE");
 	}
-	print(Vector3f(-0.01,0.0119, 0.0), to_string(score));
+	print(Vector3f(-0.03,0.019, 0.0), to_string(score));
 	glPopMatrix();
 	glPopMatrix();
 
