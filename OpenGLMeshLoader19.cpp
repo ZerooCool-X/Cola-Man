@@ -29,6 +29,7 @@
 #include<cstring>  
 using namespace std;
 
+void renderPlayer();
 
 static uint64_t splitmix64(uint64_t x) {
 	// http://xorshift.di.unimi.it/splitmix64.c
@@ -37,7 +38,6 @@ static uint64_t splitmix64(uint64_t x) {
 	x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
 	return x ^ (x >> 31);
 }
-
 uint64_t Hash(uint64_t x) {
 	static const uint64_t FIXED_RANDOM = chrono::steady_clock::now().time_since_epoch().count();
 	return splitmix64(x + FIXED_RANDOM);
@@ -115,6 +115,8 @@ double skyDim = 0;
 double light1 = 0;
 double flicker = 1;
 double toFlicker = 50;
+double isCompleted = false;
+bool wonEndGame = false;
 bool isNight = false;
 deque <pair<int, int>>takenCoins;
 char title[] = "3D Model Loader Sample";
@@ -140,7 +142,6 @@ Vector3f front = Vector3f(1, 1, 0);
 Vector3f player = Vector3f(0, 0, 0);
 Vector3f playerV = Vector3f(0, 0, 0);
 Vector3f target = Vector3f(((Hash(rand()) % 3 + 2) * 15 + 5) * 7, 0, ((Hash(rand()) % 3 + 2) * 15 + 6) * 7);
-
 
 Vector3f sun = Vector3f(130, 160, 40);
 Vector3f enemy = Vector3f(0, 0, -35);
@@ -253,7 +254,7 @@ void InitLightSource()
 		bool s = true;
 		GLfloat l0Diffuse[] = { 0.7f, 0.7f, 0.7f, 1.0f };
 		GLfloat l0Spec[] = { 1.0f, 1.0f, 0.0f, 1.0f };
-		GLfloat l0Ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		GLfloat l0Ambient[] = { 0.3f, 0.3f, 0.3f, 1.0f };
 		GLfloat l0Position[] = { eye.x, eye.y, eye.z, s };
 		GLfloat l0Direction[] = { front.x, front.y,front.z };
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, l0Diffuse);
@@ -318,6 +319,10 @@ void myInit(void)
 
 	gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, up.x, up.y, up.z);
 }
+void endGame() {
+	isCompleted = true;
+	view = 3;
+}
 void restart(bool youWon) {
 	player = Vector3f(0, 0, 0);
 	playerV = Vector3f(0, 0, 0);
@@ -325,19 +330,34 @@ void restart(bool youWon) {
 	sun = Vector3f(130, 160, 40);
 	enemy = Vector3f(0, 0, -35);
 	enemyNextTarget = Vector3f(0, -1, 0);
-	double enemySpeed = 0.25;
+    enemySpeed = 0.25;
 	if (youWon) {
-		isNight = true;
-		sunDim = 0;
-		skyDim = 0;
-		light1 = 0;
-		glDisable(GL_LIGHT0);
-		glDisable(GL_LIGHT1);
+		if (isNight) {
+			sndPlaySound(TEXT("sounds/endGame.wav"), SND_ASYNC | SND_FILENAME);
+			wonEndGame = true;
+			endGame();
+		}
+		else {
+			isNight = true;
+			sunDim = 0;
+			skyDim = 0;
+			light1 = 0;
+			glDisable(GL_LIGHT0);
+			glDisable(GL_LIGHT1);
+		}
+		
 	}
 	else {
 		health--;
 	}
+	if (health == 0) {
+		sndPlaySound(TEXT("sounds/lose.wav"), SND_ASYNC | SND_FILENAME);
+
+		wonEndGame = false;
+		endGame();
+	}
 }
+
 
 
 bool isBuilding(int x, int z) {
@@ -377,10 +397,14 @@ void isFreeThenMove(Vector3f acc) {
 	}
 	if (isObsticle((int)round(player.x + acc.x), (int)round(player.z + acc.z))) {
 		if (player.y < 1) {
-			if (isObsticle((int)round(player.x + acc.x), (int)round(player.z)))
+			if (isObsticle((int)round(player.x + acc.x), (int)round(player.z))) {
+				//sndPlaySound(TEXT("sounds/carCollision.wav"), SND_ASYNC | SND_FILENAME);
 				acc = acc * Vector3f(0, 1, 1);
+			}
 			if (isObsticle((int)round(player.x + acc.x), (int)round(player.z + acc.z)))
+			   //sndPlaySound(TEXT("sounds/carCollision.wav"), SND_ASYNC | SND_FILENAME);
 				acc = acc * Vector3f(1, 1, 0);
+
 
 		}
 	}
@@ -418,27 +442,29 @@ void isFreeThenMove(Vector3f acc) {
 	}
 }
 void move() {
-	Vector3f acc = Vector3f(0, 0, 0);
-	if (movingFront) {
-		acc += front.unit();
-	}
-	if (movingBack) {
-		acc += front.unit() * -1;
-	}
-	Vector3f right = up.cross(front);
-	if (movingRight) {
-		acc += right.unit() * -1;
-	}
-	if (movingLeft) {
-		acc += right.unit();
-	}
-	if (acc.x != 0 || acc.y != 0 || acc.z != 0) {
-		acc = acc.unit() / 4;
-	}
-	acc += playerV;
-	playerV += Vector3f(0, -0.0098, 0);
+       Vector3f acc = Vector3f(0, 0, 0);
+		if (movingFront) {
+			acc += front.unit();
+		} 
+		if (movingBack) {
+			acc += front.unit() * -1;
+		}
+		Vector3f right = up.cross(front);
+		if (movingRight) {
+			acc += right.unit() * -1;
+		}
+		if (movingLeft) {
+			acc += right.unit();
+		}
+		if (acc.x != 0 || acc.y != 0 || acc.z != 0) {
+			acc = acc.unit() / 4;
+		}
+		acc += playerV;
+		playerV += Vector3f(0, -0.0098, 0);
 
-	isFreeThenMove(acc);
+		isFreeThenMove(acc);
+	
+	
 }
 void moveEnemy() {
 	int xp = (int)round(player.x / 7.0) + 1;
@@ -637,6 +663,7 @@ void print(Vector3f pos, string string) {
 		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, string[i]);
 	}
 }
+
 void drawLightPost() {
 	glDisable(GL_LIGHTING);
 	glPushMatrix();
@@ -902,12 +929,6 @@ void renderPlayer() {
 	glPopMatrix();
 
 }
-
-
-
-
-
-
 void renderScreen() {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_COLOR_MATERIAL);
@@ -943,32 +964,64 @@ void renderScreen() {
 	glVertex3f(0, 0.003, 0);
 	glVertex3f(0, 0, 0.003);
 	glEnd();
-
 	glPopMatrix();
-
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_LIGHTING);
 }
+void renderEndGameScreen(bool won) {
+	glPushMatrix();
+	glPushMatrix();
+	glRotatef(angleCoin, 0, 1, 0);
+	glScalef(0.015, 0.015, 0.015);
+	model_player.Draw();
+	glPopMatrix();
+	glPushMatrix();
+	glColor3f(1, 1, 1);
+	Vector3f where = eye + (center - eye).unit() * 0.2;
+	glTranslatef(where.x, where.y, where.z);
+	glRotatef(angleFront + (view == 2 ? 180 : 0), 0, 1, 0);
+	glRotatef(-angleUp, 0, 0, 1);
+	if (won) {
+
+	print(Vector3f(-0.01,0.015,0), "YOU WON SCORE :");
+	}
+	else {
+		print(Vector3f(-0.01, 0.015, 0), "YOU LOST SCORE :");
+	}
+	print(Vector3f(-0.01,0.0119, 0.0), to_string(score));
+	glPopMatrix();
+	glPopMatrix();
+
+}
+
 
 void Special(int key, int x, int y) {
+	if (!isCompleted) {
+		switch (key) {
+		case GLUT_KEY_UP: {
+			cameraUp = true;
+			break;
+		}
+		case GLUT_KEY_DOWN: {
+			cameraDown = true;
+			break;}
+		case GLUT_KEY_LEFT: {
+			cameraLeft = true;
+			break;
+		}
+		case GLUT_KEY_RIGHT: {
+			cameraRight = true;
+			break;
+		}
+		}
+	}
+	else {
+		if (key == '8') {
+	        	exit(0);
 
-	switch (key) {
-	case GLUT_KEY_UP: {
-		cameraUp = true;
-		break;
+		}
 	}
-	case GLUT_KEY_DOWN: {
-		cameraDown = true;
-		break;}
-	case GLUT_KEY_LEFT: {
-		cameraLeft = true;
-		break;
-	}
-	case GLUT_KEY_RIGHT: {
-		cameraRight = true;
-		break;
-	}
-	}
+	
 
 	glutPostRedisplay();
 }
@@ -995,51 +1048,60 @@ void SpecialUp(int key, int x, int y) {
 void myKeyboard(unsigned char button, int x, int y)
 
 {
+	if (!isCompleted) {
 
-	switch (button)
-	{
-	case ' ': {
-		if (jump < 100) {
-			sndPlaySound(TEXT("sounds/wallCollision.wav"), SND_ASYNC | SND_FILENAME);
-			playerV += Vector3f(0, 0.2, 0);
-			jump++;
+		switch (button)
+		{
+		case ' ': {
+			if (jump < 100) {
+				sndPlaySound(TEXT("sounds/wallCollision.wav"), SND_ASYNC | SND_FILENAME);
+				playerV += Vector3f(0, 0.2, 0);
+				jump++;
+			}
+			break;
 		}
-		break;
-	}
-	case 'w': {
-		movingFront = true;
-		break;
-	}
-	case 's': {
-		movingBack = true;
-		break;}
-	case 'a': {
-		movingLeft = true;
-		break;
-	}
-	case 'd': {
-		movingRight = true;
-		break;
-	}
-	case '1':
-		//First person
-		view = 1;
-		break;
-	case '2':
-		//second person
-		view = 2;
-		break;
-	case '3':
-		//Third person
-		view = 3;
-		break;
+		case 'w': {
+			movingFront = true;
+			break;
+		}
+		case 's': {
+			movingBack = true;
+			break;}
+		case 'a': {
+			movingLeft = true;
+			break;
+		}
+		case 'd': {
+			movingRight = true;
+			break;
+		}
+		case '1':
+			//First person
+			view = 1;
+			break;
+		case '2':
+			//second person
+			view = 2;
+			break;
+		case '3':
+			//Third person
+			view = 3;
+			break;
 
-	case '9':
-		exit(0);
-		break;
-	default:
-		break;
+		case '9':
+			exit(0);
+			break;
+		default:
+			break;
+		}
 	}
+	else {
+		if (button == '8') {
+			exit(0);
+
+		}
+	}
+
 
 
 	glLoadIdentity();
@@ -1091,45 +1153,50 @@ void myMouse(int x, int y)
 void display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	ShowCursor(false);
-	InitLightSource();
-	InitMaterial();
-	//rendering
-	renderTarget();
-	drawSun();
-	renderGround();// Draw Ground
-	renderObsticles();
-	renderCoins();
-	renderScreen();
-	renderMap();
-	if (isNight) {
-		renderLightPosts();
-	}
-	renderEnemy();
-	if (view != 1)
-		renderPlayer();
+	if (!isCompleted) {
+		ShowCursor(false);
+		InitLightSource();
+		InitMaterial();
+		//rendering
+		renderTarget();
+		drawSun();
+		renderGround();// Draw Ground
+		//renderObsticles();
+		renderCoins();
+		renderScreen();
+		renderMap();
+		if (isNight) {
+			renderLightPosts();
+		}
+		renderEnemy();
+		if (view != 1)
+			renderPlayer();
 
-	glPushMatrix();
-	GLUquadricObj* qobj;
-	qobj = gluNewQuadric();
-	glTranslated(player.x, 0, player.z);
-	glColor3f(0.7 + skyDim, 0.7 + skyDim, 0.7 + skyDim);
-	glRotated(90, 1, 0, 1);
-	if (isNight) {
-		glBindTexture(GL_TEXTURE_2D, tex_sky_night);
+		glPushMatrix();
+		GLUquadricObj* qobj;
+		qobj = gluNewQuadric();
+		glTranslated(player.x, 0, player.z);
+		glColor3f(0.7 + skyDim, 0.7 + skyDim, 0.7 + skyDim);
+		glRotated(90, 1, 0, 1);
+		if (isNight) {
+			glBindTexture(GL_TEXTURE_2D, tex_sky_night);
+
+		}
+		else {
+			glBindTexture(GL_TEXTURE_2D, tex_sky);
+
+		}
+		gluQuadricTexture(qobj, true);
+		gluQuadricNormals(qobj, GL_SMOOTH);
+		gluSphere(qobj, 200, 100, 100);
+		gluDeleteQuadric(qobj);
+		glPopMatrix();
+	
 
 	}
 	else {
-		glBindTexture(GL_TEXTURE_2D, tex_sky);
-
+		renderEndGameScreen(wonEndGame);
 	}
-	gluQuadricTexture(qobj, true);
-	gluQuadricNormals(qobj, GL_SMOOTH);
-	gluSphere(qobj, 200, 100, 100);
-	gluDeleteQuadric(qobj);
-	glPopMatrix();
-
-
 	glutSwapBuffers();
 }
 void tick(int value) {
@@ -1139,14 +1206,26 @@ void tick(int value) {
 		toFlicker = 50;
 		flicker = !flicker;
 	}
+	if (!isCompleted) {
 
 	moveEnemy();
+	}
+
 
 	if (target.dis(player) < 2) {
+		if (!isNight) {
+		sndPlaySound("sounds/bottleDrink.wav", SND_ASYNC | SND_FILENAME);
+
+		}
 		restart(true);
 	}
 	if (enemy.dis(player) < 2) {
 		restart(false);
+		
+	}
+	if (enemy.dis(player) < 4) {
+			sndPlaySound(TEXT("sounds/monster.wav"), SND_ASYNC | SND_FILENAME);
+
 	}
 	if (!isNight) {
 		if (sunDim >= -0.6) {
