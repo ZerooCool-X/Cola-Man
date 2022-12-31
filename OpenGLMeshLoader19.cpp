@@ -255,7 +255,7 @@ void InitLightSource()
 		GLfloat l0Spec[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 		GLfloat l0Ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		GLfloat l0Position[] = { eye.x, eye.y, eye.z, s };
-		GLfloat l0Direction[] = { front.x, front.y,front.z };
+		GLfloat l0Direction[] = { center.x, center.y,center.z };
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, l0Diffuse);
 		glLightfv(GL_LIGHT0, GL_POSITION, l0Position);
 		glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 30.0);
@@ -351,7 +351,7 @@ bool isBuilding(int x, int z) {
 }
 bool isObsticle(int x, int z) {
 	if (x == 0 && z == 0 || isBuilding(x, z) || ((x % 7 == 0) && (z % 7 == 0)))return false;
-	if ((Hash(x) + Hash(z)) % 30) {
+	if ((Hash(x) + Hash(z)) % 100) {
 		return false;
 	}
 	else {
@@ -536,12 +536,13 @@ void rotateSun() {
 void drawCoin(int x, int z) {
 	glPushMatrix();
 	if (isNight) {
+		glDisable(GL_LIGHTING);
 		glTranslatef(0, -0.5, 0);
 		glRotatef(angleCoin + (x + 1) * (z + 1) * 7, 0, 1, 0);
 		glRotatef(90, 1, 0, 0);
 		glScalef(0.15, 0.15, 0.15);
 		model_drink.Draw();
-
+		glEnable(GL_LIGHTING);
 	}
 	else {
 		glTranslatef(0, -0.4, 0);
@@ -627,6 +628,18 @@ void drawHealth(int x, int y) {
 	drawTriangle(x, y, x - 9.8, y + 13, x + 9.8, y + 13);
 	glPopMatrix();
 }
+void drawLightPost() {
+	glDisable(GL_LIGHTING);
+	glPushMatrix();
+	glScalef(0.01, 0.01, 0.01);
+	glColor3f(0.2,0.2, flicker);
+	glRotated(-45,0,1,0);
+	model_lightPost.Draw();
+	glPopMatrix();
+	glEnable(GL_LIGHTING);
+
+
+}
 
 void print(Vector3f pos, string string) {
 	int len, i;
@@ -636,17 +649,6 @@ void print(Vector3f pos, string string) {
 	{
 		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, string[i]);
 	}
-}
-void drawLightPost() {
-	glDisable(GL_LIGHTING);
-	glPushMatrix();
-	glScalef(0.01, 0.01, 0.01);
-	glColor3f(0.2,0.2, flicker);
-	model_lightPost.Draw();
-	glPopMatrix();
-	glEnable(GL_LIGHTING);
-
-
 }
 
 void renderTarget() {
@@ -817,12 +819,12 @@ void renderObsticles()
 
 	for (int x = -30 + centerx;x - centerx <= 30;x++) {
 		for (int z = -30 + centerz;z - centerz <= 30;z++) {
+			if (abs(centerx - x) + abs(centerz - z) > 28)continue;
 			if (isObsticle(x, z)) {
 				glPushMatrix();
-				glTranslatef(x, 0.501, z);
+				glTranslatef(x, 0.01, z);
 				if (isNight) {
 					glRotated(180, 0, 1, 0);
-					glTranslated(0, -0.5, 0);
 					glScalef(0.01, 0.02, 0.01);
 					model_car.Draw();
 				}
