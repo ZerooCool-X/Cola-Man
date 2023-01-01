@@ -833,10 +833,6 @@ void renderTarget() {
 void renderCoins()
 
 {
-
-
-
-
 	glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
 	glColor3f(1, 1, 1);
 
@@ -1268,6 +1264,7 @@ void myKeyboard(unsigned char button, int x, int y)
 				playerSpeed = 1.5;
 				loadingPower = 0;
 			}
+			break;
 		}
 		case 'w': {
 			movingFront = true;
